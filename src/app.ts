@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from 'express';
 export const app = express();
 require('dotenv').config();
 import cors from 'cors';
+import { ErrorMiddleWare } from './Middlewares/Errors';
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -27,3 +28,5 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
     err.statusCode = 404;
     next(err);
 });
+
+app.use(ErrorMiddleWare);
