@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Eleaner
+    </title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Using Inter font as the default */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom styles for email compatibility */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .email-header,
+        .email-footer {
+            text-align: center;
+        }
+
+        .email-body {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .welcome-icon {
+            background-color: #dcfce7;
+            /* green-100 */
+            color: #16a34a;
+            /* green-600 */
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .cta-button {
+            background-color: #2563eb;
+            /* blue-600 */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #1d4ed8;
+            /* blue-700 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-4 sm:p-6">
+
+    <div class="email-container">
+
+        <!-- Email Header -->
+        <div class="email-header bg-blue-600 p-2">
+            <p class=" font-bold text-2xl align-center text-white w-auto">ELearner
+            </p>
+        </div>
+
+        <!-- Email Body -->
+        <div class="email-body text-gray-800">
+
+            <!-- Success Icon -->
+            <div class="welcome-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <!-- Personalize the greeting -->
+            <p class="text-lg mb-6 text-gray-600">Hi <%= user.name %>,</p>
+
+            <p class="text-base mb-6 text-gray-600">Your account has been successfully verified. We're thrilled to have
+                you join our community.</p>
+
+
+            <hr class="border-gray-200 my-6">
+
+            <!-- Help/Support Information -->
+            <p class="text-sm text-gray-500">
+                Questions? Check out our <a href="#" class="text-blue-600 hover:underline">Help Center</a> or contact
+                our <a href="#" class="text-blue-600 hover:underline">support team</a>.
+            </p>
+        </div>
+
+        <!-- Email Footer -->
+        <div class="email-footer p-4 mt-4 text-center text-sm text-gray-500">
+            <p>&copy; <%= new Date().getFullYear() %> ELearner. All
+                    rights reserved.</p>
+
+
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
