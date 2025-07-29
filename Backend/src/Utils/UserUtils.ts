@@ -14,7 +14,7 @@ export const setCookies = (res: Response, user: IUser): void => {
     const AccessToken = user.AccessToken();
     const RefreshToken = user.RefreshToken();
 
-    // redis.set(user._id as string, JSON.stringify(user))
+    redis.set(user._id as string, JSON.stringify(user))
 
     const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '300', 10);
     const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '1200', 10);
@@ -24,14 +24,14 @@ export const setCookies = (res: Response, user: IUser): void => {
         httpOnly: true,
         maxAge: ExpriesAccess * 1000,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
     };
     const RefreshCookieOptions: IcookieOptions = {
         expires: new Date(Date.now() + ExpriesRefresh * 1000),
         httpOnly: true,
         maxAge: ExpriesRefresh * 1000,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
     };
     res.cookie('token', AccessToken, AccessCookieOptions);
     res.cookie('refreshToken', RefreshToken, RefreshCookieOptions);
@@ -39,7 +39,6 @@ export const setCookies = (res: Response, user: IUser): void => {
     res.status(200).json({
         success: true,
         message: 'User logged in successfully',
-        user,
         AccessToken,
     });
 };
