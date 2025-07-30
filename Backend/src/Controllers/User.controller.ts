@@ -17,12 +17,12 @@ export const registerUser = asyncHandler(async (req: Request, res: Response, nex
     try {
         const { name, email, password } = req.body as bodyInterface;
         if (!name || !email || !password) {
-            return next(new ErrorHandler(400, 'Please provide all fields'));
+            return next(new ErrorHandler('Please provide all fields', 400));
         }
 
         const isExist = await User.findOne({ email });
         if (isExist) {
-            return next(new ErrorHandler(400, 'User already exist with this email'));
+            return next(new ErrorHandler('User already exist with this email', 400));
         }
 
         const user: bodyInterface = {
@@ -38,10 +38,10 @@ export const registerUser = asyncHandler(async (req: Request, res: Response, nex
                 message: 'User created successfully',
             });
         } catch (error: any) {
-            return next(new ErrorHandler(500, 'Error sending activation email'));
+            return next(new ErrorHandler('Error sending activation email', 500));
         }
     } catch (err: any) {
-        next(new ErrorHandler(400, err.message));
+        next(new ErrorHandler(err, 400));
     }
 });
 
@@ -53,26 +53,26 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
     try {
         const { email, password } = req.body as loginBody;
         if (!email || !password) {
-            return next(new ErrorHandler(400, 'Please provide email and password'));
+            return next(new ErrorHandler('Please provide email and password', 400));
         }
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
-            return next(new ErrorHandler(401, 'Invalid email or password'));
+            return next(new ErrorHandler('Invalid email or password', 401));
         }
         const isMatched = await user.comparePassword(password);
         if (!isMatched) {
-            return next(new ErrorHandler(400, 'Invalid email or password'));
+            return next(new ErrorHandler('Invalid email or password', 400));
         }
         setCookies(res, user);
     } catch (error: any) {
-        next(new ErrorHandler(400, error.message));
+        next(new ErrorHandler(error, 400));
     }
 });
 
 export const LogoutUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        clrearCookies(req,res);
+        clrearCookies(req, res);
     } catch (error: any) {
-        next(new ErrorHandler(400, error.message));
+        next(new ErrorHandler(error, 400));
     }
 });
