@@ -2,6 +2,8 @@ import ErrorHandler from '../Utils/ErrorHnadler';
 import { Request, Response, NextFunction } from 'express';
 
 export const ErrorMiddleWare = (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.log(err,err.statusCode, err.message);
+    
     err.statusCode = err.statusCode || 500;
     err.message = err.message || 'Internal Server Error';
 

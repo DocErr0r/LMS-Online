@@ -71,7 +71,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
 
 export const LogoutUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        clrearCookies(res);
+        clrearCookies(req,res);
     } catch (error: any) {
         next(new ErrorHandler(400, error.message));
     }

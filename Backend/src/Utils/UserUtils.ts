@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { IUser } from '../Models/UserModal';
 import { redis } from '../config/redis';
 
@@ -14,7 +14,7 @@ export const setCookies = (res: Response, user: IUser): void => {
     const AccessToken = user.AccessToken();
     const RefreshToken = user.RefreshToken();
 
-    redis.set(user._id as string, JSON.stringify(user))
+    redis.set(user._id as string, JSON.stringify(user));
 
     const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '300', 10);
     const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '1200', 10);
@@ -43,9 +43,11 @@ export const setCookies = (res: Response, user: IUser): void => {
     });
 };
 
-export const clrearCookies = (res: Response): void => {
+export const clrearCookies = (req: Request, res: Response): void => {
     res.clearCookie('token');
     res.clearCookie('refreshToken');
+    const userId = req.user._id as string || "";
+    redis.del(userId)
     res.status(200).json({
         success: true,
         message: 'Logged out successfully',
