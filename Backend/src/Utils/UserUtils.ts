@@ -16,20 +16,20 @@ export const setCookies = (res: Response, user: IUser): void => {
 
     redis.set(user._id as string, JSON.stringify(user));
 
-    const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '300', 10);
-    const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '1200', 10);
+    const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '5');
+    const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '3');
 
     const AccessCookieOptions: IcookieOptions = {
-        expires: new Date(Date.now() + ExpriesAccess * 1000),
+        expires: new Date(Date.now() + ExpriesAccess * 60 * 1000),
         httpOnly: true,
-        maxAge: ExpriesAccess * 1000,
+        maxAge: ExpriesAccess * 60 * 1000,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
     };
     const RefreshCookieOptions: IcookieOptions = {
-        expires: new Date(Date.now() + ExpriesRefresh * 1000),
+        expires: new Date(Date.now() + ExpriesRefresh * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        maxAge: ExpriesRefresh * 1000,
+        maxAge: ExpriesRefresh * 24 * 60 * 60 * 1000,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
     };
@@ -46,8 +46,8 @@ export const setCookies = (res: Response, user: IUser): void => {
 export const clrearCookies = (req: Request, res: Response): void => {
     res.clearCookie('token');
     res.clearCookie('refreshToken');
-    const userId = req.user._id as string || "";
-    redis.del(userId)
+    const userId = (req.user._id as string) || '';
+    redis.del(userId);
     res.status(200).json({
         success: true,
         message: 'Logged out successfully',

@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 export interface IUser extends Document {
     name: string;
@@ -74,10 +74,22 @@ userSchema.methods.comparePassword = async function (userPassword: string): Prom
 };
 
 userSchema.methods.AccessToken = function (): string {
-    return jwt.sign({ id: this.id }, (process.env.AccessToken as string) || '');
+    return jwt.sign(
+        { id: this.id },
+        process.env.AccessToken as string,
+        {
+            expiresIn: (process.env.EXPIRE_ATOKEN || '5') + 'm',
+        } as SignOptions,
+    );
 };
 userSchema.methods.RefreshToken = function (): string {
-    return jwt.sign({ id: this.id }, (process.env.RefreshToken as string) || '');
+    return jwt.sign(
+        { id: this.id },
+        process.env.RefreshToken as string,
+        {
+            expiresIn: (process.env.EXPIRE_REFRESH || '3') + 'd',
+        } as SignOptions,
+    );
 };
 
 const User: Model<IUser> = mongoose.model('User', userSchema);
