@@ -10,29 +10,30 @@ interface IcookieOptions {
     sameSite: 'strict' | 'lax' | 'none' | undefined;
 }
 
+const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '5');
+const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '3');
+
+export const AccessCookieOptions: IcookieOptions = {
+    expires: new Date(Date.now() + ExpriesAccess * 60 * 1000),
+    httpOnly: true,
+    maxAge: ExpriesAccess * 60 * 1000,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+};
+export const RefreshCookieOptions: IcookieOptions = {
+    expires: new Date(Date.now() + ExpriesRefresh * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    maxAge: ExpriesRefresh * 24 * 60 * 60 * 1000,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+};
+
 export const setCookies = (res: Response, user: IUser): void => {
     const AccessToken = user.AccessToken();
     const RefreshToken = user.RefreshToken();
 
     redis.set(user._id as string, JSON.stringify(user));
 
-    const ExpriesAccess = parseInt(process.env.EXPIRE_ATOKEN || '5');
-    const ExpriesRefresh = parseInt(process.env.EXPIRE_REFRESH || '3');
-
-    const AccessCookieOptions: IcookieOptions = {
-        expires: new Date(Date.now() + ExpriesAccess * 60 * 1000),
-        httpOnly: true,
-        maxAge: ExpriesAccess * 60 * 1000,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    };
-    const RefreshCookieOptions: IcookieOptions = {
-        expires: new Date(Date.now() + ExpriesRefresh * 24 * 60 * 60 * 1000),
-        httpOnly: true,
-        maxAge: ExpriesRefresh * 24 * 60 * 60 * 1000,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    };
     res.cookie('token', AccessToken, AccessCookieOptions);
     res.cookie('refreshToken', RefreshToken, RefreshCookieOptions);
 

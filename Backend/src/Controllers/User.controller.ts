@@ -4,7 +4,9 @@ import ErrorHandler from '../Utils/ErrorHnadler';
 import User from '../Models/UserModal';
 import jwt, { Secret } from 'jsonwebtoken';
 import { SendMail } from '../Utils/SendMail';
-import { clrearCookies, setCookies } from '../Utils/UserUtils';
+import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
+import { redis } from '../config/redis';
+import { getUserDetails } from '../services/User.services';
 
 interface bodyInterface {
     name: string;
@@ -13,6 +15,7 @@ interface bodyInterface {
     avatar?: string;
 }
 
+// register user
 export const registerUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email, password } = req.body as bodyInterface;
@@ -30,21 +33,17 @@ export const registerUser = asyncHandler(async (req: Request, res: Response, nex
             email,
             password,
         };
-
-        try {
-            const userCreated = await User.create(user);
-            res.status(201).json({
-                success: true,
-                message: 'User created successfully',
-            });
-        } catch (error: any) {
-            return next(new ErrorHandler('Error sending activation email', 500));
-        }
+        const userCreated = await User.create(user);
+        res.status(201).json({
+            success: true,
+            message: 'User created successfully',
+        });
     } catch (err: any) {
         next(new ErrorHandler(err, 400));
     }
 });
 
+// login user
 interface loginBody {
     email: string;
     password: string;
@@ -69,9 +68,48 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
     }
 });
 
+// logout user -> auth required
 export const LogoutUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         clrearCookies(req, res);
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// update acess token
+export const updateAccessToken = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (!refreshToken) {
+            return next(new ErrorHandler('Please login first', 401));
+        }
+        const decoded = jwt.verify(refreshToken, process.env.RefreshToken as Secret) as jwt.JwtPayload;
+
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+        const newAccessToken = user.AccessToken();
+        const newRefreshToken = user.RefreshToken();
+
+        res.cookie('token', newAccessToken, AccessCookieOptions);
+        res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
+        return res.status(200).json({
+            success: true,
+            message: 'Access token updated successfully',
+            newAccessToken,
+        });
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// get user profile
+export const getUserProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user._id as string;
+        getUserDetails(userId, res);
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
     }
