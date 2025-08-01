@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { asyncHandler } from '../Utils/AsyncHandler';
 import ErrorHandler from '../Utils/ErrorHnadler';
-import User from '../Models/UserModal';
+import User, { IUser } from '../Models/UserModal';
 import jwt, { Secret } from 'jsonwebtoken';
 import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
@@ -68,7 +68,8 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
     }
 });
 
-// logout user -> auth required
+// user -> auth required
+// logout
 export const LogoutUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         clrearCookies(req, res);
@@ -95,6 +96,7 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
 
         res.cookie('token', newAccessToken, AccessCookieOptions);
         res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
+
         return res.status(200).json({
             success: true,
             message: 'Access token updated successfully',
@@ -110,6 +112,93 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response, n
     try {
         const userId = req.user._id as string;
         getUserDetails(userId, res);
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// update profile
+interface updateProfileBody {
+    name: string;
+    email: string;
+    avatar?: string;
+}
+export const updateProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user._id as string;
+        const { name, email, avatar } = req.body as updateProfileBody;
+
+        const user = (await User.findById(userId)) as IUser;
+        if (user && email) {
+            const isExist = (await User.findOne({ email })) as any;
+            if (isExist && isExist._id.toString() !== userId) {
+                return next(new ErrorHandler('Email already exists', 400));
+            }
+            user.email = email;
+        }
+        user.name = name;
+
+        if (avatar) {
+            user.avatar = {
+                public_id: Date.now().toString(), // Placeholder for public_id, you can replace it with actual logic if using cloudinary',
+                url: avatar,
+            };
+            // if (user.avatar) {
+            //     // destroy old avatar if exists
+            //     await coludinary.v2.uploader.destroy(user.avatar.public_id);
+            //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
+            //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+            // } else {
+            //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
+            //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+            // }
+        }
+        await user.save({ validateBeforeSave: true });
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            user,
+        });
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// update password
+interface updatePasswordBody {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export const updatePassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user._id as string;
+        const { oldPassword, newPassword, confirmPassword } = req.body as updatePasswordBody;
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return next(new ErrorHandler('Please provide all fields', 400));
+        }
+        if (newPassword !== confirmPassword) {
+            return next(new ErrorHandler('Passwords do not match', 400));
+        }
+
+        const user = await User.findById(userId).select('+password');
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+        
+        const isMatched = await user.comparePassword(oldPassword);
+        if (!isMatched) {
+            return next(new ErrorHandler('Old password is incorrect', 400));
+        }
+        user.password = newPassword;
+        await user.save({ validateBeforeSave: true });
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully',
+        });
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
     }
