@@ -1,0 +1,82 @@
+{
+    "name": "Full Stack Web Development with MERN",
+    "description": "Learn to build modern, scalable web applications from scratch using MongoDB, Express.js, React, and Node.js. This course covers everything from setting up your development environment to deploying a production-ready application.",
+    "price": 4999,
+    "estimatedPrice": 8999,
+    "thumbnail": {
+        "public_id": "courses/mern_stack_thumbnail_1",
+        "url": "https://example.com/images/mern_stack.jpg"
+    },
+    "tags": "MERN, React, Node.js, Full Stack, Web Development",
+    "level": "Intermediate",
+    "demoUrl": "https://example.com/videos/mern_demo",
+    "benefits": ["Build production-ready MERN stack applications", "Master frontend and backend development", "Deploy applications to the cloud"],
+    "prerequisites": ["Basic understanding of HTML, CSS, and JavaScript", "Familiarity with ES6 features"],
+    "courseData": [
+        {
+            "title": "Module 1: Introduction to Node.js and Express",
+            "description": "Getting started with backend development using Node.js and the Express framework.",
+            "videoUrl": "https://example.com/videos/module1_node",
+            "videoSection": "Backend Fundamentals",
+            "videoLength": "45",
+            "videoPlayer": "youtube",
+            "links": [
+                { "title": "Node.js Official Documentation", "url": "https://nodejs.org/" },
+                { "title": "Express.js Guide", "url": "https://expressjs.com/" }
+            ],
+            "questions": [
+                {
+                    "user": "60d0fe4f5311236168a109ca",
+                    "comment": "What is the difference between `require` and `import`?"
+                }
+            ],
+            "suggestions": ["Practice building a simple API", "Explore middleware functions"]
+        }
+    ],
+    "reviews": [
+        {
+            "user": "60d0fe4f5311236168a109cb",
+            "rating": 5,
+            "comment": "This is the best MERN stack course I have ever taken! Highly recommended.",
+            "replies": [
+                {
+                    "user": "60d0fe4f5311236168a109ca",
+                    "comment": "I agree! The instructor explains concepts very clearly."
+                }
+            ]
+        }
+    ],
+    "rating": 5,
+    "purchased": 120
+}
+
+
+{
+    "name": 11234,
+    "description": "Learn the fundamentals of cloud services like AWS, Azure, and Google Cloud.",
+    "price": 3500,
+    "estimatedPrice": 7000,
+    "thumbnail": {
+        "public_id": "courses/cloud_intro_11",
+        "url": "https://example.com/images/cloud_intro.jpg"
+    },
+    "tags": "Cloud, AWS, Azure, GCP, DevOps",
+    "level": "Beginner",
+    "demoUrl": "https://example.com/videos/cloud_intro_demo",
+    "benefits": [
+        "Understand core cloud concepts",
+        "Prepare for certification exams"
+    ],
+    "prerequisites": [
+        "Basic IT literacy"
+    ],
+    "courseData": [
+        {
+            "title": "Module 1: What is the Cloud?",
+            "description": "An overview of cloud computing models (IaaS, PaaS, SaaS).",
+            "videoUrl": "https://example.com/videos/module1_cloud",
+            "videoSection": "Fundamentals",
+            "videoLength": "25"
+        }
+    ]
+}

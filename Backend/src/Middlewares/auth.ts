@@ -26,5 +26,6 @@ export const authRole = (...roles: string[]) => {
         if (!roles.includes(req.user.role || '')) {
             return next(new ErrorHandler(`Role: ${req.user?.role} is not allow to access this`, 403));
         }
+        next();
     };
 };

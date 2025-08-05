@@ -5,11 +5,11 @@ export const ErrorMiddleWare = (err: any, req: Request, res: Response, next: Nex
     let statusCode = err.statusCode || 500;
     let message = err.message || 'Internal Server Error';
 
-    if (err.name === 'castError') {
+    if (err.name === 'CastError') {
         message = `Resouse not found.Invalid - ${err.path}:${err.value}`;
         statusCode = 404;
     }
-    if (err.name === 'jsonWebTokenError') {
+    if (err.name === 'JsonWebTokenError') {
         message = 'Json Web Token is invalid.Try Again!!!';
         statusCode = 400;
     }
@@ -18,7 +18,11 @@ export const ErrorMiddleWare = (err: any, req: Request, res: Response, next: Nex
         statusCode = 400;
     }
     if (err.name === 'ValidationError') {
-        message = 'Invalid Request Data.Try Again!!!';
+        message = err.message || 'Validation Error';;
+        statusCode = 400;
+    }
+    if (err.name === 'ValidatorError') {
+        message = `Validation failed: name: Path ${err.path} is required.`;
         statusCode = 400;
     }
 

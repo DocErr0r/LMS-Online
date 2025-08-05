@@ -5,6 +5,7 @@ export const app = express();
 import cors from 'cors';
 import { ErrorMiddleWare } from './Middlewares/Errors';
 import { UserRouter } from './Routes/UserRoute';
+import { courseRouter } from './Routes/courseRoute';
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -17,7 +18,8 @@ app.use(
     }),
 );
 
-app.use('/api/v1', UserRouter);
+app.use('/api/v1/auth', UserRouter);
+app.use('/api/v1/course', courseRouter);
 
 app.get('/test', (req: Request, res: Response) => {
     res.status(200).json({
