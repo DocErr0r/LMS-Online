@@ -3,6 +3,7 @@ import { asyncHandler } from '../Utils/AsyncHandler';
 import ErrorHandler from '../Utils/ErrorHnadler';
 import { Course } from '../Models/Course.model';
 import { saveCourse } from '../services/course.services';
+import { redis } from '../config/redis';
 
 interface CourseBody {
     name: string;
@@ -66,22 +67,6 @@ export const createCourse = asyncHandler(async (req: Request, res: Response, nex
     saveCourse(course, res, next);
 });
 
-// get all courses
-export const getAllCourses = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const courses = await Course.find({});
-        if (!courses || courses.length === 0) {
-            return next(new ErrorHandler('No courses found', 404));
-        }
-        res.status(200).json({
-            success: true,
-            courses,
-        });
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
-    }
-});
-
 // edit course by id
 export const editCourseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -110,4 +95,76 @@ export const editCourseById = asyncHandler(async (req: Request, res: Response, n
             course: updatedCourse,
         });
     } catch (error) {}
+});
+
+// get all course - for all wihhout puechase
+const notforUnpaid = '-courseData.videoUrl -courseData.videoThumbnail -courseData.videoPlayer -courseData.videSection -courseData.links -courseData.suggestions -courseData.questions';
+export const getAllCoursesForAll = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // fetch from redis if available
+        const cachedCourses = await redis.get('allCourses');
+        if (cachedCourses) {
+            return res.status(200).json({
+                success: true,
+                courses: JSON.parse(cachedCourses),
+            });
+        } else {
+            const courses = await Course.find({}).select(notforUnpaid);
+            if (!courses || courses.length === 0) {
+                return next(new ErrorHandler('No courses found', 404));
+            }
+            // cache the courses in redis
+            await redis.set('allCourses', JSON.stringify(courses));
+            res.status(200).json({
+                success: true,
+                courses,
+            });
+        }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// get course by id -- wihout purchase
+export const getCourseByIdForAll = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const courseId = req.params.id;
+        // fetch from redis if available
+        const cachedCourse = await redis.get(courseId);
+        if (cachedCourse) {
+            return res.status(200).json({
+                success: true,
+                course: JSON.parse(cachedCourse),
+            });
+        } else {
+            const course = await Course.findById(courseId).select(notforUnpaid);
+            if (!course) {
+                return next(new ErrorHandler('Course not found', 404));
+            }
+            // cache the course in redis
+            await redis.set(courseId, JSON.stringify(course));
+            res.status(200).json({
+                success: true,
+                course,
+            });
+        }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// get all courses
+export const getAllCourses = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const courses = await Course.find({});
+        if (!courses || courses.length === 0) {
+            return next(new ErrorHandler('No courses found', 404));
+        }
+        res.status(200).json({
+            success: true,
+            courses,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
 });
