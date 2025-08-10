@@ -2,8 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import { asyncHandler } from '../Utils/AsyncHandler';
 import ErrorHandler from '../Utils/ErrorHnadler';
 import { Course } from '../Models/Course.model';
-import { saveCourse } from '../services/course.services';
+import { isHaveCourseByUser, saveCourse } from '../services/course.services';
 import { redis } from '../config/redis';
+import { isValidObjectId } from 'mongoose';
 
 interface CourseBody {
     name: string;
@@ -165,6 +166,118 @@ export const getAllCourses = asyncHandler(async (req: Request, res: Response, ne
             courses,
         });
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
+        return next(new ErrorHandler(error, 500));
+    }
+});
+
+//  get course content for valid user
+export const getCourseByUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const courseId = req.params.id;
+        const userCourses = req.user?.courses;
+        isHaveCourseByUser(courseId, userCourses, res, next);
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            content: course.courseData,
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
+    }
+});
+
+// add queation to specific course
+interface quationBody {
+    question: string;
+    courseId: string;
+    courseDataId: string;
+}
+export const addQuestion = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { question, courseDataId, courseId } = req.body as quationBody;
+        const userCourses = req.user?.courses;
+        isHaveCourseByUser(courseId, userCourses, res, next);
+
+        if (!question || !courseId || !courseDataId) {
+            return next(new ErrorHandler('Please provide all required fields', 400));
+        }
+        if (!isValidObjectId(courseDataId)) {
+            return next(new ErrorHandler('Invalid: please provide valid ID', 400));
+        }
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+
+        const courseData = course?.courseData?.find((v) => v.id.toString() === courseDataId);
+
+        const newQuestion: any = {
+            user: req.user,
+            question: question,
+        };
+
+        courseData?.questions.push(newQuestion);
+        await course.save();
+
+        res.status(201).json({
+            success: true,
+            course,
+            message: 'Question added successfully',
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
+    }
+});
+
+// reply of the questions or course
+interface replyBody {
+    reply: string;
+    questionId: string;
+    courseId: string;
+    courseDataId: string;
+}
+export const addReply = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { reply, questionId, courseDataId, courseId } = req.body as replyBody;
+        const userCourses = req.user?.courses;
+        isHaveCourseByUser(courseId, userCourses, res, next);
+
+        if (!isValidObjectId(courseDataId)) {
+            return next(new ErrorHandler('Invalid: please provide valid ID', 400));
+        }
+        if (!isValidObjectId(questionId)) {
+            return next(new ErrorHandler('Invalid: please provide valid ID', 400));
+        }
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        const courseData = course?.courseData?.find((v) => v.id.toString() === courseDataId);
+        if (!courseData) {
+            return next(new ErrorHandler('Course data not found', 404));
+        }
+        const question = courseData.questions?.find((q: any) => q._id.equals(questionId));
+        if (!question) {
+            return next(new ErrorHandler('Question not found', 404));
+        }
+        const newReply: any = {
+            user: req.user,
+            reply: reply,
+        };
+        question.replies?.push(newReply);
+        await course.save();
+        res.status(201).json({
+            success: true,
+            message: 'Reply added successfully',
+            course,
+        });
+        // add logic for notificaiton
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
     }
 });

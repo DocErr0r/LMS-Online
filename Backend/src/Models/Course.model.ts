@@ -1,25 +1,31 @@
-import mongoose, { Document, ObjectId } from 'mongoose';
+import mongoose, { Document, ObjectId, Types } from 'mongoose';
+import User, { IUser } from './UserModal';
 
-interface IComment extends Document {
-    user: object;
-    comment: string;
-    replies?: IComment[];
+interface IReply extends Document {
+    user: IUser;
+    reply: string;
+}
+
+interface IQuestions extends Document {
+    user: IUser;
+    question: string;
+    replies?: IReply[] ;
 }
 interface ILink extends Document {
     title: string;
     url: string;
 }
 interface IReview extends Document {
-    user: object;
+    user: IUser;
     comment: string;
     rating: number;
-    replies: IComment[];
+    replies: IReply[];
 }
 interface ICourseData extends Document {
     title: string;
     description: string;
     links: ILink[];
-    questions: IComment[];
+    questions: IQuestions[];
     videoUrl: string;
     videoThumbnail: object;
     videoSection: string;
@@ -36,7 +42,7 @@ interface ICourse extends Document {
     tags: string;
     level: string;
     demoUrl: string;
-    courseData: ICourseData;
+    courseData: ICourseData[];
     reviews: IReview[];
     rating: number;
     benefits: string[];
@@ -48,14 +54,25 @@ const LinkSchema = new mongoose.Schema<ILink>({
     title: String,
     url: String,
 });
-const CommentSchema = new mongoose.Schema<IComment>({
+const CommentSchema = new mongoose.Schema<IQuestions>({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    comment: String,
+    question: String,
+    replies: [
+        {
+            User: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            reply: String,
+        },
+    ],
 });
 const ReviewSchema = new mongoose.Schema<IReview>({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     rating: { type: Number, default: 0 },
-    replies: [CommentSchema],
+    replies: [
+        {
+            User: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            reply: String,
+        },
+    ],
     comment: String,
 });
 const CourseDataSchema = new mongoose.Schema<ICourseData>({

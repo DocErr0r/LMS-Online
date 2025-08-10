@@ -96,6 +96,7 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
 
         res.cookie('token', newAccessToken, AccessCookieOptions);
         res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
+        // redis.setex(user._id as string,6*60,JSON.stringify(user))
 
         return res.status(200).json({
             success: true,
@@ -154,6 +155,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
             // }
         }
         await user.save({ validateBeforeSave: true });
+        redis.setex(user._id as string, 60 * 6, JSON.stringify(User));
 
         res.status(200).json({
             success: true,
@@ -187,7 +189,7 @@ export const updatePassword = asyncHandler(async (req: Request, res: Response, n
         if (!user) {
             return next(new ErrorHandler('User not found', 404));
         }
-        
+
         const isMatched = await user.comparePassword(oldPassword);
         if (!isMatched) {
             return next(new ErrorHandler('Old password is incorrect', 400));
