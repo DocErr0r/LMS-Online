@@ -281,3 +281,60 @@ export const addReply = asyncHandler(async (req: Request, res: Response, next: N
         return next(new ErrorHandler(error, 500));
     }
 });
+
+// add review to course
+interface reviewBody {
+    comment: string;
+    rating: number;
+}
+export const addReview = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { comment, rating } = req.body as reviewBody;
+        const courseId = req.params.id;
+        const userCourses = req.user?.courses;
+        isHaveCourseByUser(courseId, userCourses, res, next);
+
+        if (!comment || !rating) {
+            return next(new ErrorHandler('Please provide all required fields', 400));
+        }
+        if (rating < 1 || rating > 5) {
+            return next(new ErrorHandler('Rating must be between 1 and 5', 400));
+        }
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        // Check if the user has already reviewed the course
+        const existingReview = course.reviews.find((review: any) => review.user.toString() === req.user._id);
+        let newReview: any = {};
+        if (existingReview) {
+            newReview = {
+                ...existingReview,
+                comment,
+                rating,
+            };
+            const index = course.reviews.indexOf(existingReview);
+            course.reviews[index] = newReview;
+        } else {
+            newReview = {
+                user: req.user._id,
+                comment,
+                rating,
+            };
+            course.reviews.push(newReview);
+        }
+
+        const totalRating = course.reviews.reduce((acc: number, review: any) => acc + review.rating, 0);
+
+        course.rating = totalRating / course.reviews.length;
+
+        await course.save();
+        res.status(201).json({
+            success: true,
+            message: 'Review added successfully',
+            course,
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
+    }
+});
