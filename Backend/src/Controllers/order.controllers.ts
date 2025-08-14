@@ -38,7 +38,9 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
             paymentInfo,
         });
         user.courses.push({ courseId: course._id as string });
-        course.purchased ? (course.purchased += 1) : (course.purchased = 1);
+        // increase course puchased 
+        course.purchased =(course.purchased ?? 0) + 1 
+        // course.purchased ? (course.purchased += 1) : (course.purchased = 1);
 
         const notificaiton = await Notification.create({
             userId: user._id,
