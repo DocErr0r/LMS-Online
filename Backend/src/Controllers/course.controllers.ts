@@ -5,6 +5,7 @@ import { Course } from '../Models/Course.model';
 import { isHaveCourseByUser, saveCourse } from '../services/course.services';
 import { redis } from '../config/redis';
 import { isValidObjectId } from 'mongoose';
+import Notification from '../Models/Notification.model';
 
 interface CourseBody {
     name: string;
@@ -224,6 +225,13 @@ export const addQuestion = asyncHandler(async (req: Request, res: Response, next
         courseData?.questions.push(newQuestion);
         await course.save();
 
+        // send notification to user who created the course
+        const notification = await Notification.create({
+            user: req.user,
+            title: 'New Question',
+            message: `You have a new question to the course ${courseData?.title}`,
+        });
+
         res.status(201).json({
             success: true,
             course,
@@ -271,12 +279,23 @@ export const addReply = asyncHandler(async (req: Request, res: Response, next: N
         };
         question.replies?.push(newReply);
         await course.save();
+
+        // add logic for notificaiton
+        if (req.user._id === question.user.toString()) {
+            const notification = await Notification.create({
+                user: req.user,
+                title: 'New Reply',
+                message: `You have a new reply to question in the course: ${courseData.title}`,
+            });
+        } else {
+            // send mail to the user who asked the question
+        }
+
         res.status(201).json({
             success: true,
             message: 'Reply added successfully',
             course,
         });
-        // add logic for notificaiton
     } catch (error) {
         return next(new ErrorHandler(error, 500));
     }
