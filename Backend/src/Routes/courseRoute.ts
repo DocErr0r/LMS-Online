@@ -17,7 +17,7 @@ router.put('/review/:id', [validId, isAuth], addReview);
 
 // for admin users
 router.post('/create', isAuth, authRole('admin'), createCourse);
-router.get('/admin/all-course', isAuth, authRole('admin'), getAllCourses);
+router.get('/admin/courses', isAuth, authRole('admin'), getAllCourses);
 router.put('/edit/:id', [validId, isAuth, authRole('admin')], editCourseById);
 
 export const courseRouter = router;

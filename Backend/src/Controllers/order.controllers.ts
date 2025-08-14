@@ -63,3 +63,20 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
         return next(new ErrorHandler(err, 500));
     }
 });
+
+
+// get all orders for admin
+export const getAllOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const orders = await Order.find().populate('userId', 'name email').populate('courseId', 'name price');
+        if (!orders || orders.length === 0) {
+            return next(new ErrorHandler('No orders found', 404));
+        }
+        res.status(200).json({
+            success: true,
+            orders,
+        });
+    } catch (error) {
+        next(new ErrorHandler(error, 500));
+    }
+});

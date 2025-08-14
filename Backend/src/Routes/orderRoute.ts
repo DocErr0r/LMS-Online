@@ -1,8 +1,8 @@
 import express from 'express';
-import { isAuth } from '../Middlewares/auth';
-import { createOrder } from '../Controllers/order.controllers';
+import { authRole, isAuth } from '../Middlewares/auth';
+import { createOrder, getAllOrders } from '../Controllers/order.controllers';
 const router = express.Router();
 
 router.post('/create', [isAuth], createOrder);
-
+router.get('/admin/orders', [isAuth, authRole('admin')], getAllOrders);
 export const OrderRoutes = router;

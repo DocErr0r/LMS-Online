@@ -6,7 +6,7 @@ import jwt, { Secret } from 'jsonwebtoken';
 import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
 import { redis } from '../config/redis';
-import { getUserDetails } from '../services/User.services';
+import { getAllUsers, getUserDetails } from '../services/User.services';
 
 interface bodyInterface {
     name: string;
@@ -201,6 +201,15 @@ export const updatePassword = asyncHandler(async (req: Request, res: Response, n
             success: true,
             message: 'Password updated successfully',
         });
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// get all users -- admin only
+export const getallUsers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        getAllUsers(res, next);
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
     }

@@ -155,7 +155,7 @@ export const getCourseByIdForAll = asyncHandler(async (req: Request, res: Respon
     }
 });
 
-// get all courses
+// get all courses for admin
 export const getAllCourses = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const courses = await Course.find({});
