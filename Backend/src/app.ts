@@ -23,7 +23,7 @@ app.use(
 app.use('/api/v1/auth', UserRouter);
 app.use('/api/v1/course', courseRouter);
 app.use('/api/v1/order', OrderRoutes);
-app.use('/api/v1/notification',NotificationRoutes)
+app.use('/api/v1/notification', NotificationRoutes);
 
 app.get('/test', (req: Request, res: Response) => {
     res.status(200).json({

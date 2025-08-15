@@ -5,7 +5,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 export interface IUser extends Document {
     name: string;
     email: string;
-    password: string;
+    password: string | undefined;
     avatar: {
         public_id: string;
         url: string;
@@ -20,9 +20,11 @@ export interface IUser extends Document {
 
 var userSchema: Schema<IUser> = new mongoose.Schema(
     {
-        name: { type: String, required: [true, 'Please enter your name'] },
+        name: { type: String, trim: true, required: [true, 'Please enter your name'] },
         email: {
             type: String,
+            lowercase: true,
+            // trim: true,
             required: [true, 'Please enter your email'],
             unique: true,
             validate: {

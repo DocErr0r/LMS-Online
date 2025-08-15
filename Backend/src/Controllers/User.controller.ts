@@ -6,7 +6,7 @@ import jwt, { Secret } from 'jsonwebtoken';
 import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
 import { redis } from '../config/redis';
-import { getAllUsers, getUserDetails } from '../services/User.services';
+import { getAllUsers, getUserDetails, updateRoleService } from '../services/User.services';
 
 interface bodyInterface {
     name: string;
@@ -61,7 +61,10 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
         const isMatched = await user.comparePassword(password);
         if (!isMatched) {
             return next(new ErrorHandler('Invalid email or password', 400));
-        }
+        };
+        
+        user.password = undefined;
+
         setCookies(res, user);
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
@@ -129,7 +132,11 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
         const userId = req.user._id as string;
         const { name, email, avatar } = req.body as updateProfileBody;
 
-        const user = (await User.findById(userId)) as IUser;
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+
         if (user && email) {
             const isExist = (await User.findOne({ email })) as any;
             if (isExist && isExist._id.toString() !== userId) {
@@ -155,7 +162,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
             // }
         }
         await user.save({ validateBeforeSave: true });
-        redis.setex(user._id as string, 60 * 6, JSON.stringify(User));
+        redis.set(user._id as string, JSON.stringify(user));
 
         res.status(200).json({
             success: true,
@@ -210,6 +217,62 @@ export const updatePassword = asyncHandler(async (req: Request, res: Response, n
 export const getallUsers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         getAllUsers(res, next);
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// update user role by admin
+interface updateRoleBody {
+    role: string;
+}
+export const updateRole = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.params.id;
+        const { role } = req.body as updateRoleBody;
+        if (!role) {
+            return next(new ErrorHandler('Please provide role', 400));
+        }
+        if (role !== 'user' && role !== 'admin') {
+            return next(new ErrorHandler('Role can only be user or admin', 400));
+        }
+        // user cant change his own role
+        if (req.user._id === userId) {
+            return next(new ErrorHandler('You cannot change your own role', 403));
+        }
+
+        updateRoleService(req.user.role as string, userId, role, res, next);
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// delete user by admin
+export const deleteUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            return next(new ErrorHandler('Please provide user id', 400));
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+        // not self delete admin user
+        if (req.user._id === userId && req.user.role === 'admin') {
+            return next(new ErrorHandler('You cannot delete your own account', 403));
+        }
+        // not delete admin user by other admin
+        if (user.role === 'admin' && req.user.role !== 'superAdmin') {
+            return next(new ErrorHandler('You cannot delete admin user', 403));
+        }
+        await user.deleteOne();
+        redis.del(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully',
+        });
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
     }

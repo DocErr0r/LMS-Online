@@ -1,6 +1,7 @@
 import express from 'express';
-import { getallUsers, getUserProfile, loginUser, LogoutUser, registerUser, updateAccessToken, updatePassword, updateProfile } from '../Controllers/User.controller';
+import { deleteUser, getallUsers, getUserProfile, loginUser, LogoutUser, registerUser, updateAccessToken, updatePassword, updateProfile, updateRole } from '../Controllers/User.controller';
 import { authRole, isAuth } from '../Middlewares/auth';
+import { validId } from '../Middlewares/validId';
 const router = express.Router();
 
 router.post('/register', registerUser);
@@ -13,5 +14,9 @@ router.put('/me', isAuth, updateProfile);
 router.put('/me/update-password', isAuth, updatePassword);
 
 router.get('/admin/users', [isAuth, authRole('admin')], getallUsers);
+router
+    .route('/admin/users/:id')
+    .put([validId, isAuth, authRole('admin')], updateRole)
+    .delete([validId, isAuth, authRole('admin')], deleteUser);
 
 export const UserRouter = router;
