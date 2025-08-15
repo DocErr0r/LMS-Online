@@ -2,10 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 import { asyncHandler } from '../Utils/AsyncHandler';
 import ErrorHandler from '../Utils/ErrorHnadler';
 import { Course } from '../Models/Course.model';
-import { isHaveCourseByUser, saveCourse } from '../services/course.services';
+import { getAllCourseService, isHaveCourseByUser, saveCourse } from '../services/course.services';
 import { redis } from '../config/redis';
 import { isValidObjectId } from 'mongoose';
 import Notification from '../Models/Notification.model';
+import User from '../Models/UserModal';
 
 interface CourseBody {
     name: string;
@@ -111,16 +112,7 @@ export const getAllCoursesForAll = asyncHandler(async (req: Request, res: Respon
                 courses: JSON.parse(cachedCourses),
             });
         } else {
-            const courses = await Course.find({}).select(notforUnpaid);
-            if (!courses || courses.length === 0) {
-                return next(new ErrorHandler('No courses found', 404));
-            }
-            // cache the courses in redis
-            await redis.set('allCourses', JSON.stringify(courses));
-            res.status(200).json({
-                success: true,
-                courses,
-            });
+            getAllCourseService(notforUnpaid, res, next);
         }
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
@@ -352,6 +344,37 @@ export const addReview = asyncHandler(async (req: Request, res: Response, next: 
             success: true,
             message: 'Review added successfully',
             course,
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
+    }
+});
+
+// delete course by id - admin only
+export const deleteCourseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const courseId = req.params.id;
+        const course = await Course.findByIdAndDelete(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        // remove course from redis cache
+        await redis.del(courseId);
+        // remove course from redis cache for all courses
+        const cachedCourses = await redis.get('allCourses');
+        if (cachedCourses) {
+            const courses = JSON.parse(cachedCourses);
+            const updatedCourses = courses.filter((c: any) => c._id.toString() !== courseId);
+            await redis.set('allCourses', JSON.stringify(updatedCourses));
+        }
+        // remove course by user who purchased it
+        
+        const users = await User.updateMany({ 'courses.courseId': courseId }, { $pull: { courses: { courseId: courseId } } });
+        // console.log(users);
+
+        res.status(200).json({
+            success: true,
+            message: 'Course deleted successfully',
         });
     } catch (error) {
         return next(new ErrorHandler(error, 500));

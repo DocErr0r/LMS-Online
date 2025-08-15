@@ -55,9 +55,9 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
         res.status(201).json({
             success: true,
             order,
-            user,
-            course,
-            notificaiton,
+            // user,
+            // course,
+            // notificaiton,
         });
     } catch (err: any) {
         return next(new ErrorHandler(err, 500));
