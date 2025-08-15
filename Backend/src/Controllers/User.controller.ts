@@ -62,8 +62,6 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
         if (!isMatched) {
             return next(new ErrorHandler('Invalid email or password', 400));
         };
-        
-        user.password = undefined;
 
         setCookies(res, user);
     } catch (error: any) {

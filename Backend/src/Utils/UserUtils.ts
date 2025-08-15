@@ -32,7 +32,10 @@ export const setCookies = (res: Response, user: IUser): void => {
     const AccessToken = user.AccessToken();
     const RefreshToken = user.RefreshToken();
 
-    redis.set(user._id as string, JSON.stringify(user));
+    // remove password from user object before sending to client
+    const { password, ...userWithoutPassword } = user.toObject();
+
+    redis.set(user._id as string, JSON.stringify(userWithoutPassword));
 
     res.cookie('token', AccessToken, AccessCookieOptions);
     res.cookie('refreshToken', RefreshToken, RefreshCookieOptions);
