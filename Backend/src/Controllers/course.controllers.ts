@@ -371,6 +371,7 @@ export const deleteCourseById = asyncHandler(async (req: Request, res: Response,
         
         const users = await User.updateMany({ 'courses.courseId': courseId }, { $pull: { courses: { courseId: courseId } } });
         // console.log(users);
+        // remove course from order if exists
 
         res.status(200).json({
             success: true,

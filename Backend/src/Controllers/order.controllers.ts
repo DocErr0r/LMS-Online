@@ -16,7 +16,7 @@ interface CreateOrderRequest {
 }
 export const createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { courseId, paymentInfo } = req.body as CreateOrderRequest;
+        let { courseId, paymentInfo } = req.body as CreateOrderRequest;
         if (!isValidObjectId(courseId)) {
             return next(new ErrorHandler('Invalid course ID', 400));
         }
@@ -32,14 +32,21 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
         if (!course) {
             return next(new ErrorHandler('Course not found', 404));
         }
+        // calculate payment and info
+        const amount = course.price || course.estimatedPrice;
+        paymentInfo = {
+            ...paymentInfo,
+            amount,
+        };
+
         const order = await Order.create({
             userId: req.user._id,
             courseId: course._id,
             paymentInfo,
         });
         user.courses.push({ courseId: course._id as string });
-        // increase course puchased 
-        course.purchased =(course.purchased ?? 0) + 1 
+        // increase course puchased
+        course.purchased = (course.purchased ?? 0) + 1;
         // course.purchased ? (course.purchased += 1) : (course.purchased = 1);
 
         const notificaiton = await Notification.create({
@@ -47,7 +54,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
             title: 'New Order',
             message: `You have new order form course: ${course.name}`,
         });
-  
+
         await course.save();
         await user.save();
         updateUserDetails(user._id as string, user);
