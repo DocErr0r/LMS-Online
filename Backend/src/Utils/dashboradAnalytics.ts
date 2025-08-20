@@ -7,9 +7,21 @@ import { asyncHandler } from './AsyncHandler';
 import ErrorHandler from './ErrorHnadler';
 import { analyticsOfLastYear } from '../services/analytics.services';
 
-// get total users, orders, courses, and revenue
+// Calculate percentage changes
+const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Number((((current - previous) / previous) * 100).toFixed(2));
+};
+
+// get total users, orders, courses, and revenue with percentage changes
 export const getDashboardTotals = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // get current and 30 days ago date
+        const cDate = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setMonth(cDate.getMonth() - 1);
+
+        // current data
         const totalUsers = await User.countDocuments();
         const totalOrders = await Order.countDocuments();
         const totalCourses = await Course.countDocuments();
@@ -23,6 +35,21 @@ export const getDashboardTotals = asyncHandler(async (req: Request, res: Respons
             { $group: { _id: null, total: { $sum: '$course.price' } } },
         ]);
         const totalRevenue = revenue[0]?.total || 0;
+
+        // last month data
+        const lasttotalUsers = await User.countDocuments({ createdAt: { $lt: thirtyDaysAgo } });
+        const lasttotalOrders = await Order.countDocuments({ createdAt: { $lt: thirtyDaysAgo } });
+        const lasttotalCourses = await Course.countDocuments({ createdAt: { $lt: thirtyDaysAgo } });
+        // const lasttotalCategories = await Category.countDocuments({ createdAt: { $lt: thirtyDaysAgo } });
+
+        // Revenue
+        const lastrevenue = await Order.aggregate([{ $match: { createdAt: { $lte: thirtyDaysAgo } } }, { $lookup: { from: 'courses', localField: 'courseId', foreignField: '_id', as: 'course' } }, { $unwind: '$course' }, { $group: { _id: null, total: { $sum: '$course.price' } } }]);
+        const lasttotalRevenue = lastrevenue[0]?.total || 0;
+
+        const userPercentageChange = calculatePercentageChange(totalUsers, lasttotalUsers);
+        const orderPercentageChange = calculatePercentageChange(totalOrders, lasttotalOrders);
+        const coursePercentageChange = calculatePercentageChange(totalCourses, lasttotalCourses);
+        const revenuePercentageChange = calculatePercentageChange(totalRevenue, lasttotalRevenue);
 
         // Top 5 courses
         const topcourses = await Order.aggregate([
@@ -56,10 +83,22 @@ export const getDashboardTotals = asyncHandler(async (req: Request, res: Respons
         res.status(200).json({
             success: true,
             data: {
-                totalUsers,
-                totalOrders,
-                totalCourses,
-                totalRevenue,
+                totalUsers: {
+                    value: totalUsers,
+                    percentageChange: userPercentageChange,
+                },
+                totalOrders: {
+                    value: totalOrders,
+                    percentageChange: orderPercentageChange,
+                },
+                totalCourses: {
+                    value: totalCourses,
+                    percentageChange: coursePercentageChange,
+                },
+                totalRevenue: {
+                    value: totalRevenue,
+                    percentageChange: revenuePercentageChange,
+                },
             },
             topcourses,
         });
@@ -69,23 +108,22 @@ export const getDashboardTotals = asyncHandler(async (req: Request, res: Respons
 });
 
 // get dashboard analytics data of 1 year (last 12 months)
-export const getDashboardAnalytics = asyncHandler(async (req: Request, res: Response, next:NextFunction) => {
+export const getDashboardAnalytics = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const MonthSales = await analyticsOfLastYear(Order);
         const MonthUsers = await analyticsOfLastYear(User);
         const MonthCourses = await analyticsOfLastYear(Course);
 
-
         res.status(200).json({
             success: true,
-            charts :{
+            charts: {
                 MonthSales,
                 MonthUsers,
                 MonthCourses,
-            }
+            },
         });
-    } catch (error:any) {
-        console.log(error)
+    } catch (error: any) {
+        console.log(error);
         next(new ErrorHandler(error, 500));
     }
 });
