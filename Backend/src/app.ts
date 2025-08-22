@@ -9,6 +9,7 @@ import { courseRouter } from './Routes/courseRoute';
 import { OrderRoutes } from './Routes/orderRoute';
 import { NotificationRoutes } from './Routes/notificationRoute';
 import { dashboardRoutes } from './Routes/dashboardRoute';
+import { LayouRoutes } from './Routes/layoutRoute';
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -21,11 +22,12 @@ app.use(
     }),
 );
 
+app.use('/api/v1', LayouRoutes);
 app.use('/api/v1/auth', UserRouter);
 app.use('/api/v1/course', courseRouter);
 app.use('/api/v1/order', OrderRoutes);
 app.use('/api/v1/notification', NotificationRoutes);
-app.use('/api/v1/admin',dashboardRoutes);
+app.use('/api/v1/admin', dashboardRoutes);
 
 app.get('/test', (req: Request, res: Response) => {
     res.status(200).json({
