@@ -7,6 +7,7 @@ import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
 import { redis } from '../config/redis';
 import { getAllUsers, getUserDetails, updateRoleService } from '../services/User.services';
+export const redisExpire = 60 * 60 * 24 * 7;
 
 interface bodyInterface {
     name: string;
@@ -61,7 +62,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
         const isMatched = await user.comparePassword(password);
         if (!isMatched) {
             return next(new ErrorHandler('Invalid email or password', 400));
-        };
+        }
 
         setCookies(res, user);
     } catch (error: any) {
@@ -97,7 +98,7 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
 
         res.cookie('token', newAccessToken, AccessCookieOptions);
         res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
-        // redis.setex(user._id as string,6*60,JSON.stringify(user))
+        redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
 
         return res.status(200).json({
             success: true,
@@ -160,7 +161,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
             // }
         }
         await user.save({ validateBeforeSave: true });
-        redis.set(user._id as string, JSON.stringify(user));
+        redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
 
         res.status(200).json({
             success: true,

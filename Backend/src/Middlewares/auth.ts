@@ -15,7 +15,7 @@ export const isAuth = asyncHandler(async (req: Request, res: Response, next: Nex
     }
     const user = await redis.get(decoded.id as string);
     if (!user) {
-        return next(new ErrorHandler('User not found, please login again', 400));
+        return next(new ErrorHandler('session Exipre, please login again', 404));
     }
     req.user = JSON.parse(user);
     next();

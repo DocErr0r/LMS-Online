@@ -2,6 +2,7 @@ import { NextFunction, Response } from 'express';
 import User from '../Models/UserModal';
 import { redis } from '../config/redis';
 import ErrorHandler from '../Utils/ErrorHnadler';
+import { redisExpire } from '../Controllers/User.controller';
 
 export const getUserDetails = async (userId: string, res: Response) => {
     const user = await User.findById(userId).select('-__v');
@@ -16,7 +17,7 @@ export const getUserDetails = async (userId: string, res: Response) => {
 
 export const updateUserDetails = async (userId: string, updateData: any) => {
     // udate redis user by userId
-    redis.set(userId, JSON.stringify(updateData));
+    redis.setex(userId, redisExpire, JSON.stringify(updateData));
 };
 
 // get all users
@@ -44,7 +45,7 @@ export const updateRoleService = async (adminRole: string, userId: string, role:
             return next(new ErrorHandler('You cannot change admin role', 403));
         }
         const updatedUser = await User.findByIdAndUpdate(userId, { role }, { new: true, runValidators: true });
-        redis.set(user._id as string, JSON.stringify(user));
+        redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
         res.status(200).json({
             success: true,
             message: 'User role updated successfully',

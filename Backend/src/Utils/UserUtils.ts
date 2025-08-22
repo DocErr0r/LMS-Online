@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { IUser } from '../Models/UserModal';
 import { redis } from '../config/redis';
+import { redisExpire } from '../Controllers/User.controller';
 
 interface IcookieOptions {
     expires: Date;
@@ -35,7 +36,7 @@ export const setCookies = (res: Response, user: IUser): void => {
     // remove password from user object before sending to client
     const { password, ...userWithoutPassword } = user.toObject();
 
-    redis.set(user._id as string, JSON.stringify(userWithoutPassword));
+    redis.setex(user._id as string, redisExpire, JSON.stringify(userWithoutPassword));
 
     res.cookie('token', AccessToken, AccessCookieOptions);
     res.cookie('refreshToken', RefreshToken, RefreshCookieOptions);
