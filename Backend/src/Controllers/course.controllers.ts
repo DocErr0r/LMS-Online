@@ -8,6 +8,8 @@ import { isValidObjectId } from 'mongoose';
 import Notification from '../Models/Notification.model';
 import User from '../Models/UserModal';
 
+const notforUnpaid = '-courseData.videoUrl -courseData.videoThumbnail -courseData.videoPlayer -courseData.videSection -courseData.links -courseData.suggestions -courseData.questions';
+
 interface CourseBody {
     name: string;
     description: string;
@@ -92,16 +94,24 @@ export const editCourseById = asyncHandler(async (req: Request, res: Response, n
         if (!updatedCourse) {
             return next(new ErrorHandler('Course not found', 404));
         }
+        const cachedCourse = await redis.get(updatedCourse._id as string);
+        if (cachedCourse) {
+            const newCourse = await Course.findById(updatedCourse._id).select(notforUnpaid);
+            if (newCourse) {
+                await redis.set(newCourse._id as string, JSON.stringify(newCourse));
+            }
+        }
         res.status(200).json({
             success: true,
             message: 'Course updated successfully',
             course: updatedCourse,
         });
-    } catch (error) {}
+    } catch (error: any) {
+        return next(new ErrorHandler(error, 500));
+    }
 });
 
 // get all course - for all wihhout puechase
-const notforUnpaid = '-courseData.videoUrl -courseData.videoThumbnail -courseData.videoPlayer -courseData.videSection -courseData.links -courseData.suggestions -courseData.questions';
 export const getAllCoursesForAll = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // fetch from redis if available
@@ -365,10 +375,10 @@ export const deleteCourseById = asyncHandler(async (req: Request, res: Response,
         if (cachedCourses) {
             const courses = JSON.parse(cachedCourses);
             const updatedCourses = courses.filter((c: any) => c._id.toString() !== courseId);
-            await redis.set('allCourses', JSON.stringify(updatedCourses));
+            await redis.setex('allCourses',60*60, JSON.stringify(updatedCourses));
         }
         // remove course by user who purchased it
-        
+
         const users = await User.updateMany({ 'courses.courseId': courseId }, { $pull: { courses: { courseId: courseId } } });
         // console.log(users);
         // remove course from order if exists

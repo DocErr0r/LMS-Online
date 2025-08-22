@@ -35,7 +35,7 @@ export const getAllCourseService = async (notforUnpaid: string, res: Response, n
             return next(new ErrorHandler('No courses found', 404));
         }
         // cache the courses in redis
-        await redis.set('allCourses', JSON.stringify(courses));
+        await redis.setex('allCourses', 60 * 60, JSON.stringify(courses));
         res.status(200).json({
             success: true,
             courses,
