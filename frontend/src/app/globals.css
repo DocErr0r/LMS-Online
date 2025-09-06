@@ -1,6 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -23,4 +23,42 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+} */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* Dark Purple Theme */
+    --color-purple-bg: #0b0615;
+    --color-purple-surface: #171129;
+    --color-purple-border: #2a1f45;
+    --color-purple-text: #e9e3ff;
+    --color-purple-muted: #bfb6e8;
+    --color-purple-primary: #8b5cf6;
+    --color-purple-accent: #f472b6;
+
+    /* Light Purple Theme */
+    --color-purpleLight-bg: #f8f7ff;
+    --color-purpleLight-surface: #ffffff;
+    --color-purpleLight-border: #e8e3ff;
+    --color-purpleLight-text: #1b1333;
+    --color-purpleLight-muted: #5b507d;
+    --color-purpleLight-primary: #7c3aed;
+    --color-purpleLight-accent: #d946ef;
+
+    /* Custom Screens */
+    --breakpoint-400: 400px;
+    --breakpoint-800: 800px;
+    --breakpoint-1000: 1000px;
+    --breakpoint-1100: 1100px;
+    --breakpoint-1200: 1200px;
+    --breakpoint-1300: 1300px;
+    --breakpoint-1500: 1500px;
+}
+
+@utility gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops))
+}
+@utility gradient-conic {
+    background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
 }
