@@ -15,7 +15,7 @@ LMS Online is a comprehensive Learning Management System backend built with **Ex
 - **Email Service**: Nodemailer
 - **Password Hashing**: bcryptjs
 - **Validation**: Custom middleware
-- **Task Scheduler**: node-cron
+<!-- - **Task Scheduler**: node-cron -->
 
 ## Installation & Setup
 
@@ -1307,7 +1307,7 @@ The application uses Redis for:
 
 ---
 
-## Task Scheduling
+<!-- ## Task Scheduling
 
 ### Automatic Notification Cleanup
 
@@ -1315,7 +1315,7 @@ The application uses Redis for:
 - **Action**: Delete notifications older than 30 days with "read" status
 - **File**: [dashboradAnalytics.ts](src/Utils/dashboradAnalytics.ts)
 
----
+--- -->
 
 ## Email Templates
 

@@ -1,16 +1,18 @@
 import express from 'express';
-import { deleteUser, getallUsers, getUserProfile, loginUser, LogoutUser, registerUser, updateAccessToken, updatePassword, updateProfile, updateRole } from '../Controllers/User.controller';
+import { deleteUser, getallUsers, getUserProfile, loginUser, LogoutUser, registerUser, socialLogin, updateAccessToken, updateAvatar, updatePassword, updateProfile, updateRole } from '../Controllers/User.controller';
 import { authRole, isAuth } from '../Middlewares/auth';
 import { validId } from '../Middlewares/validId';
 const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/social-auth', socialLogin);
 
 router.get('/refresh-token', updateAccessToken);
 router.get('/logout', isAuth, LogoutUser);
 router.get('/me', isAuth, getUserProfile);
 router.put('/me', isAuth, updateProfile);
+router.put('/me/update-avatar', isAuth, updateAvatar);
 router.put('/me/update-password', isAuth, updatePassword);
 
 router.get('/admin/users', [isAuth, authRole('admin')], getallUsers);

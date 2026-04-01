@@ -34,7 +34,7 @@ export const setCookies = (res: Response, user: IUser): void => {
     const RefreshToken = user.RefreshToken();
 
     // remove password from user object before sending to client
-    const { password, ...userWithoutPassword } = user.toObject();
+    const { password,createdAt,updatedAt,__v,courses, ...userWithoutPassword } = user.toObject();
 
     redis.setex(user._id as string, redisExpire, JSON.stringify(userWithoutPassword));
 

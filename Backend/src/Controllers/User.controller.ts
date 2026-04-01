@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { asyncHandler } from '../Utils/AsyncHandler';
 import ErrorHandler from '../Utils/ErrorHnadler';
 import User, { IUser } from '../Models/UserModal';
-import jwt, { Secret } from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
 import { redis } from '../config/redis';
@@ -89,12 +89,26 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
         }
         const decoded = jwt.verify(refreshToken, process.env.RefreshToken as Secret) as jwt.JwtPayload;
 
-        const user = await User.findById(decoded.id);
+        const user = JSON.parse(await redis.get(decoded.id as string) || '{}') as IUser;
         if (!user) {
             return next(new ErrorHandler('User not found', 404));
         }
-        const newAccessToken = user.AccessToken();
-        const newRefreshToken = user.RefreshToken();
+
+        // New access and refresh token genreate other due to redis data  
+        const newAccessToken = jwt.sign(
+         { id: user._id },
+          process.env.AccessToken as string,
+          {
+            expiresIn: (process.env.EXPIRE_ATOKEN || '5') + 'm',
+          } as SignOptions,
+        );
+        const newRefreshToken = jwt.sign(
+            { id: user._id },
+            process.env.RefreshToken as string,
+            {
+                expiresIn: (process.env.EXPIRE_REFRESH || '3') + 'd',
+            } as SignOptions,
+        );
 
         res.cookie('token', newAccessToken, AccessCookieOptions);
         res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
@@ -107,6 +121,30 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
         });
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
+    }
+});
+
+// Social Login || Sign Up
+interface socialLoginBody {
+    name: string;
+    email: string;
+    avatar?: string;
+}
+export const socialLogin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email, avatar } = req.body as socialLoginBody;
+        if (!name || !email) {
+            return next(new ErrorHandler('Please provide name and email', 400));
+        }
+        const isExist = await User.findOne({ email });
+        if (!isExist) {
+            const user = await User.create({ name, email, avatar });
+            setCookies(res, user);
+        } else {
+            setCookies(res, isExist);
+        }
+    } catch (error: any) {
+        next(new ErrorHandler(error, 500));
     }
 });
 
@@ -129,7 +167,7 @@ interface updateProfileBody {
 export const updateProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user._id as string;
-        const { name, email, avatar } = req.body as updateProfileBody;
+        const { name, email } = req.body as updateProfileBody;
 
         const user = await User.findById(userId);
         if (!user) {
@@ -145,27 +183,58 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
         }
         user.name = name;
 
-        if (avatar) {
-            user.avatar = {
-                public_id: Date.now().toString(), // Placeholder for public_id, you can replace it with actual logic if using cloudinary',
-                url: avatar,
-            };
-            // if (user.avatar) {
-            //     // destroy old avatar if exists
-            //     await coludinary.v2.uploader.destroy(user.avatar.public_id);
-            //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
-            //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
-            // } else {
-            //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
-            //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
-            // }
-        }
         await user.save({ validateBeforeSave: true });
         redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
 
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
+            user,
+        });
+    } catch (error: any) {
+        next(new ErrorHandler(error, 400));
+    }
+});
+
+// update avatar
+interface updateAvatarBody {
+    public_id: string;
+    url: string;
+}
+export const updateAvatar = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user._id as string;
+        const { public_id, url } = req.body as updateAvatarBody;
+        if (!public_id || !url) {
+            return next(new ErrorHandler('Please provide avatar', 400));
+        }
+        const user = await User.findById(userId) as IUser;
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+
+        user.avatar = {
+            public_id: Date.now().toString(), // Placeholder for public_id, you can replace it with actual logic if using cloudinary',
+            url: url,
+        };
+        // if (user.avatar) {
+        //     // destroy old avatar if exists
+        //     await coludinary.v2.uploader.destroy(user.avatar.public_id);
+        //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
+        //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+        // } else {
+        //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
+        //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+        // }
+
+        await user.save({ validateBeforeSave: true });
+
+        const { createdAt, updatedAt, __v, courses, ...userWithoutPassword } = user.toObject();
+        redis.set(user._id as string, JSON.stringify(userWithoutPassword), 'EX', redisExpire);
+
+        res.status(200).json({
+            success: true,
+            message: 'Avatar updated successfully',
             user,
         });
     } catch (error: any) {
