@@ -7,6 +7,7 @@ import { SendMail } from '../Utils/SendMail';
 import { AccessCookieOptions, clrearCookies, RefreshCookieOptions, setCookies } from '../Utils/UserUtils';
 import { redis } from '../config/redis';
 import { getAllUsers, getUserDetails, updateRoleService } from '../services/User.services';
+import { cloudUploder } from '../config/cloudinary';
 export const redisExpire = 60 * 60 * 24 * 7;
 
 interface bodyInterface {
@@ -89,18 +90,18 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
         }
         const decoded = jwt.verify(refreshToken, process.env.RefreshToken as Secret) as jwt.JwtPayload;
 
-        const user = JSON.parse(await redis.get(decoded.id as string) || '{}') as IUser;
+        const user = JSON.parse((await redis.get(decoded.id as string)) || '{}') as IUser;
         if (!user) {
             return next(new ErrorHandler('User not found', 404));
         }
 
-        // New access and refresh token genreate other due to redis data  
+        // New access and refresh token genreate other due to redis data
         const newAccessToken = jwt.sign(
-         { id: user._id },
-          process.env.AccessToken as string,
-          {
-            expiresIn: (process.env.EXPIRE_ATOKEN || '5') + 'm',
-          } as SignOptions,
+            { id: user._id },
+            process.env.AccessToken as string,
+            {
+                expiresIn: (process.env.EXPIRE_ATOKEN || '5') + 'm',
+            } as SignOptions,
         );
         const newRefreshToken = jwt.sign(
             { id: user._id },
@@ -198,34 +199,53 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
 
 // update avatar
 interface updateAvatarBody {
-    public_id: string;
-    url: string;
+    avatar: string;
 }
+const uploadToCloudinary = (buffer: Buffer, folder: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudUploder.upload_stream({ folder, resource_type: 'image' }, (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+        });
+        stream.end(buffer);
+    });
+};
+
 export const updateAvatar = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    let uploadedPublicId: string | null = null;
     try {
         const userId = req.user._id as string;
-        const { public_id, url } = req.body as updateAvatarBody;
-        if (!public_id || !url) {
+        // const { avatar } = req.body as updateAvatarBody;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const avatar = req.processedFile?.buffer as Buffer;
+        if (!avatar) {
             return next(new ErrorHandler('Please provide avatar', 400));
         }
-        const user = await User.findById(userId) as IUser;
+        const user = (await User.findById(userId)) as IUser;
         if (!user) {
             return next(new ErrorHandler('User not found', 404));
         }
 
-        user.avatar = {
-            public_id: Date.now().toString(), // Placeholder for public_id, you can replace it with actual logic if using cloudinary',
-            url: url,
-        };
-        // if (user.avatar) {
-        //     // destroy old avatar if exists
-        //     await coludinary.v2.uploader.destroy(user.avatar.public_id);
-        //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
-        //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
-        // } else {
-        //     const upload = await cloudinary.v2.uploader.upload(avatar, { folder: 'avatars' });
-        //     user.avatar = { public_id: upload.public_id, url: upload.secure_url };
-        // }
+        try {
+            // user.avatar = {
+            //     public_id: Date.now().toString(), // Placeholder for public_id, you can replace it with actual logic if using cloudinary',
+            //     url: avatar,
+            // };
+            if (user.avatar && user.avatar?.public_id) {
+                // destroy old avatar if exists
+                await cloudUploder.destroy(user.avatar.public_id);
+                const upload = await uploadToCloudinary(avatar, 'avatars');
+                uploadedPublicId = upload?.public_id;
+                user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+            } else {
+                // const upload = await cloudUploder.upload(avatar, { folder: 'avatars' });
+                const upload = await uploadToCloudinary(avatar, 'avatars');
+                uploadedPublicId = upload?.public_id;
+                user.avatar = { public_id: upload.public_id, url: upload.secure_url };
+            }
+        } catch (error: any) {
+            throw new Error(error?.message);
+        }
 
         await user.save({ validateBeforeSave: true });
 
@@ -238,6 +258,9 @@ export const updateAvatar = asyncHandler(async (req: Request, res: Response, nex
             user,
         });
     } catch (error: any) {
+        if (uploadedPublicId) {
+            await cloudUploder.destroy(uploadedPublicId);
+        }
         next(new ErrorHandler(error, 400));
     }
 });

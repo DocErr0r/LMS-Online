@@ -6,7 +6,9 @@ import { redisExpire } from '../Controllers/User.controller';
 
 export const getUserDetails = async (userId: string, res: Response) => {
     // TODO: get user form redis
-    const user = await User.findById(userId).select('-__v');
+    // const user = await User.findById(userId).select('-__v');
+    const userData = await redis.get(userId);
+    const user = JSON.parse(userData as string);
     if (!user) {
         throw new Error('User not found');
     }
