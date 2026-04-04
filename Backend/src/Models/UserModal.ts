@@ -5,7 +5,9 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 export interface IUser extends Document {
     name: string;
     email: string;
-    password: string;
+    password?: string;
+    provider: 'local' | 'google' | 'github';
+    providerId?: string;
     avatar: {
         public_id: string;
         url: string;
@@ -37,9 +39,20 @@ var userSchema: Schema<IUser> = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Please enter your password'],
             minlength: [6, 'Your password must be longer than 6 characters'],
             select: false,
+            required: function () {
+                return this.provider === 'local';
+            },
+        },
+        provider: {
+            type: String,
+            enum: ['local', 'google', 'github'],
+            default: 'local',
+        },
+
+        providerId: {
+            type: String,
         },
         avatar: {
             public_id: String,
@@ -64,11 +77,11 @@ var userSchema: Schema<IUser> = new mongoose.Schema(
 
 // hash password before saving user
 userSchema.pre<IUser>('save', async function (next) {
-    if (!this.isModified('password')) {
+    if (!this.isModified('password') || !this.password || this.provider !== 'local') {
         next();
     }
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await bcrypt.hash(this.password as string, salt);
 });
 // campare user password
 userSchema.methods.comparePassword = async function (userPassword: string): Promise<boolean> {

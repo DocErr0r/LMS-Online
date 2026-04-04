@@ -6,11 +6,12 @@ import { getAllCourseService, isHaveCourseByUser, saveCourse } from '../services
 import { redis } from '../config/redis';
 import { isValidObjectId } from 'mongoose';
 import Notification from '../Models/Notification.model';
-import User from '../Models/UserModal';
+import User, { IUser } from '../Models/UserModal';
 
 const notforUnpaid = '-courseData.videoUrl -courseData.videoThumbnail -courseData.videoPlayer -courseData.videSection -courseData.links -courseData.suggestions -courseData.questions';
 
 interface CourseBody {
+    user:IUser,
     name: string;
     description: string;
     price: number;
@@ -57,6 +58,7 @@ export const createCourse = asyncHandler(async (req: Request, res: Response, nex
         suggestions: data.suggestions || [],
     }));
     const course = {
+        user:req.user._id,
         name,
         description,
         price,

@@ -9,7 +9,7 @@ interface IReply extends Document {
 interface IQuestions extends Document {
     user: IUser;
     question: string;
-    replies?: IReply[] ;
+    replies?: IReply[];
 }
 interface ILink extends Document {
     title: string;
@@ -34,6 +34,7 @@ interface ICourseData extends Document {
     suggestions: string[];
 }
 interface ICourse extends Document {
+    user: IUser;
     name: string;
     description: string;
     price: number;
@@ -89,6 +90,7 @@ const CourseDataSchema = new mongoose.Schema<ICourseData>({
 });
 const CourseSchema = new mongoose.Schema<ICourse>(
     {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         name: { type: String, required: true },
         description: { type: String, required: true },
         price: { type: Number, required: true },

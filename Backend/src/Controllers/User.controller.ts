@@ -60,6 +60,9 @@ export const loginUser = asyncHandler(async (req: Request, res: Response, next: 
         if (!user) {
             return next(new ErrorHandler('Invalid email or password', 401));
         }
+        if (user.provider !== 'local') {
+            throw new Error('Invalid email or password. Please login using Google');
+        }
         const isMatched = await user.comparePassword(password);
         if (!isMatched) {
             return next(new ErrorHandler('Invalid email or password', 400));
@@ -130,16 +133,17 @@ interface socialLoginBody {
     name: string;
     email: string;
     avatar?: string;
+    sub: string;
 }
 export const socialLogin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, email, avatar } = req.body as socialLoginBody;
-        if (!name || !email) {
+        const { name, email, avatar, sub } = req.body as socialLoginBody;
+        if (!name || !email || !sub) {
             return next(new ErrorHandler('Please provide name and email', 400));
         }
         const isExist = await User.findOne({ email });
         if (!isExist) {
-            const user = await User.create({ name, email, avatar });
+            const user = await User.create({ name, email, avatar: { url: avatar }, provider: 'google', providerId: sub });
             setCookies(res, user);
         } else {
             setCookies(res, isExist);
