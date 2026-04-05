@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 
 export interface IUser extends Document {
+    _id: string | mongoose.Types.ObjectId;
     name: string;
     email: string;
     password?: string;

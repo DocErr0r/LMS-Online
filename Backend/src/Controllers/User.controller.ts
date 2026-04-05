@@ -174,7 +174,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
         const userId = req.user._id as string;
         const { name, email } = req.body as updateProfileBody;
 
-        const user = await User.findById(userId);
+        const user = (await User.findById(userId)) as IUser;
         if (!user) {
             return next(new ErrorHandler('User not found', 404));
         }
@@ -189,7 +189,8 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
         user.name = name;
 
         await user.save({ validateBeforeSave: true });
-        redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
+        const { createdAt, updatedAt, __v, ...userWithoutExtra } = user.toObject();
+        redis.set(user._id as string, JSON.stringify(userWithoutExtra), 'EX', redisExpire);
 
         res.status(200).json({
             success: true,
@@ -253,7 +254,7 @@ export const updateAvatar = asyncHandler(async (req: Request, res: Response, nex
 
         await user.save({ validateBeforeSave: true });
 
-        const { createdAt, updatedAt, __v, courses, ...userWithoutPassword } = user.toObject();
+        const { createdAt, updatedAt, __v, ...userWithoutPassword } = user.toObject();
         redis.set(user._id as string, JSON.stringify(userWithoutPassword), 'EX', redisExpire);
 
         res.status(200).json({

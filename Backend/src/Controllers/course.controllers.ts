@@ -11,7 +11,7 @@ import User, { IUser } from '../Models/UserModal';
 const notforUnpaid = '-courseData.videoUrl -courseData.videoThumbnail -courseData.videoPlayer -courseData.videSection -courseData.links -courseData.suggestions -courseData.questions';
 
 interface CourseBody {
-    user:IUser,
+    user: IUser;
     name: string;
     description: string;
     price: number;
@@ -58,7 +58,7 @@ export const createCourse = asyncHandler(async (req: Request, res: Response, nex
         suggestions: data.suggestions || [],
     }));
     const course = {
-        user:req.user._id,
+        user: req.user,
         name,
         description,
         price,
@@ -92,15 +92,23 @@ export const editCourseById = asyncHandler(async (req: Request, res: Response, n
             prerequisites: prerequisites || [],
             courseData: courseData || [],
         };
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        if (req.user?._id.toString() !== course.user.toString()) {
+            return next(new ErrorHandler('You not have access to change this course', 403));
+        }
         const updatedCourse = await Course.findByIdAndUpdate(courseId, newCourseData, { new: true });
         if (!updatedCourse) {
             return next(new ErrorHandler('Course not found', 404));
         }
         const cachedCourse = await redis.get(updatedCourse._id as string);
         if (cachedCourse) {
+            await redis.del(updatedCourse._id as string);
             const newCourse = await Course.findById(updatedCourse._id).select(notforUnpaid);
             if (newCourse) {
-                await redis.set(newCourse._id as string, JSON.stringify(newCourse));
+                await redis.set(newCourse._id as string, JSON.stringify(newCourse), 'EX', 3600);
             }
         }
         res.status(200).json({
@@ -113,7 +121,7 @@ export const editCourseById = asyncHandler(async (req: Request, res: Response, n
     }
 });
 
-// get all course - for all wihhout puechase
+// get all course - for all wihhout purchase
 export const getAllCoursesForAll = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // fetch from redis if available
@@ -148,7 +156,7 @@ export const getCourseByIdForAll = asyncHandler(async (req: Request, res: Respon
                 return next(new ErrorHandler('Course not found', 404));
             }
             // cache the course in redis
-            await redis.set(courseId, JSON.stringify(course));
+            await redis.setex(courseId, 60 * 60, JSON.stringify(course));
             res.status(200).json({
                 success: true,
                 course,
@@ -180,7 +188,10 @@ export const getCourseByUser = asyncHandler(async (req: Request, res: Response, 
     try {
         const courseId = req.params.id;
         const userCourses = req.user?.courses;
-        isHaveCourseByUser(courseId, userCourses, res, next);
+        const exits = await isHaveCourseByUser(courseId, userCourses, res, next);
+        if (!exits) {
+            return next(new ErrorHandler('you are not eligible to access this course', 403));
+        }
 
         const course = await Course.findById(courseId);
         if (!course) {
@@ -206,7 +217,10 @@ export const addQuestion = asyncHandler(async (req: Request, res: Response, next
     try {
         const { question, courseDataId, courseId } = req.body as quationBody;
         const userCourses = req.user?.courses;
-        isHaveCourseByUser(courseId, userCourses, res, next);
+        const existCourse = await isHaveCourseByUser(courseId, userCourses, res, next);
+        if (!existCourse) {
+            return next(new ErrorHandler('you are not eligible to access this course', 403));
+        }
 
         if (!question || !courseId || !courseDataId) {
             return next(new ErrorHandler('Please provide all required fields', 400));
@@ -220,6 +234,9 @@ export const addQuestion = asyncHandler(async (req: Request, res: Response, next
         }
 
         const courseData = course?.courseData?.find((v) => v.id.toString() === courseDataId);
+        if (!courseData) {
+            return next(new ErrorHandler('Invalid: please provide valid courseData ID', 404));
+        }
 
         const newQuestion: any = {
             user: req.user,
@@ -256,18 +273,26 @@ interface replyBody {
 export const addReply = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { reply, questionId, courseDataId, courseId } = req.body as replyBody;
-        const userCourses = req.user?.courses;
-        isHaveCourseByUser(courseId, userCourses, res, next);
-
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        if (['admin', 'superAdmin'].includes(req.user.role)) {
+            if (course?.user.toString() !== req?.user._id) {
+                return next(new ErrorHandler('For Admin you do not have access this course', 404));
+            }
+        } else {
+            const userCourses = req.user?.courses;
+            const existCourse = await isHaveCourseByUser(courseId, userCourses, res, next);
+            if (!existCourse) {
+                return next(new ErrorHandler('you are not eligible to access this course', 403));
+            }
+        }
         if (!isValidObjectId(courseDataId)) {
             return next(new ErrorHandler('Invalid: please provide valid ID', 400));
         }
         if (!isValidObjectId(questionId)) {
             return next(new ErrorHandler('Invalid: please provide valid ID', 400));
-        }
-        const course = await Course.findById(courseId);
-        if (!course) {
-            return next(new ErrorHandler('Course not found', 404));
         }
         const courseData = course?.courseData?.find((v) => v.id.toString() === courseDataId);
         if (!courseData) {
@@ -285,16 +310,15 @@ export const addReply = asyncHandler(async (req: Request, res: Response, next: N
         await course.save();
 
         // add logic for notificaiton
-        if (req.user._id === question.user.toString()) {
+        if (req.user._id !== course.user.toString()) {
             const notification = await Notification.create({
                 user: req.user,
                 title: 'New Reply',
                 message: `You have a new reply to question in the course: ${courseData.title}`,
             });
         } else {
-            // send mail to the user who asked the question
+            // send mail to the user who asked the question as someone has been reply on your question
         }
-
         res.status(201).json({
             success: true,
             message: 'Reply added successfully',
@@ -315,7 +339,10 @@ export const addReview = asyncHandler(async (req: Request, res: Response, next: 
         const { comment, rating } = req.body as reviewBody;
         const courseId = req.params.id;
         const userCourses = req.user?.courses;
-        isHaveCourseByUser(courseId, userCourses, res, next);
+        const existCourse = await isHaveCourseByUser(courseId, userCourses, res, next);
+        if (!existCourse) {
+            return next(new ErrorHandler('you are not eligible to access this course', 403));
+        }
 
         if (!comment || !rating) {
             return next(new ErrorHandler('Please provide all required fields', 400));
@@ -352,6 +379,13 @@ export const addReview = asyncHandler(async (req: Request, res: Response, next: 
         course.rating = totalRating / course.reviews.length;
 
         await course.save();
+
+        const notification = await Notification.create({
+            user: req.user,
+            title: 'New Review',
+            message: `${req.user?.name} give review on course: ${course?.name}`,
+        });
+
         res.status(201).json({
             success: true,
             message: 'Review added successfully',
@@ -366,6 +400,13 @@ export const addReview = asyncHandler(async (req: Request, res: Response, next: 
 export const deleteCourseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const courseId = req.params.id;
+        const c = await Course.findById(courseId);
+        if (!c) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        if (req.user?._id.toString() !== c.user.toString()) {
+            return next(new ErrorHandler('You not have access to change this course', 403));
+        }
         const course = await Course.findByIdAndDelete(courseId);
         if (!course) {
             return next(new ErrorHandler('Course not found', 404));
@@ -377,7 +418,7 @@ export const deleteCourseById = asyncHandler(async (req: Request, res: Response,
         if (cachedCourses) {
             const courses = JSON.parse(cachedCourses);
             const updatedCourses = courses.filter((c: any) => c._id.toString() !== courseId);
-            await redis.setex('allCourses',60*60, JSON.stringify(updatedCourses));
+            await redis.setex('allCourses', 60 * 60, JSON.stringify(updatedCourses));
         }
         // remove course by user who purchased it
 
