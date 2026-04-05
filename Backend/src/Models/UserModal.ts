@@ -21,7 +21,7 @@ export interface IUser extends Document {
     RefreshToken: () => string;
 }
 
-var userSchema: Schema<IUser> = new mongoose.Schema(
+const userSchema: Schema<IUser> = new mongoose.Schema(
     {
         name: { type: String, trim: true, required: [true, 'Please enter your name'] },
         email: {

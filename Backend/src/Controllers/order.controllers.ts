@@ -8,11 +8,66 @@ import Order from '../Models/Order.model';
 import Notification from '../Models/Notification.model';
 import User from '../Models/UserModal';
 import { updateUserDetails } from '../services/User.services';
+import Razorpay from 'razorpay';
+import { v4 as uuidv4 } from 'uuid';
+import { getExpactedSign } from '../services/order.services';
+
+// create Razorpay order
+interface paymentBody {
+    courseId: string;
+}
+export const createRazorpayOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { courseId } = req.body as paymentBody;
+        if (!isValidObjectId(courseId)) {
+            return next(new ErrorHandler('Invalid course ID', 400));
+        }
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+        const userCourses = user.courses.some((course: any) => course.courseId.toString() === courseId);
+        if (userCourses) {
+            return next(new ErrorHandler('You have already purchased this course', 400));
+        }
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+        let amount = course?.price || course?.estimatedPrice;
+        if (!amount) {
+            amount = 0;
+        }
+
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+        const options = {
+            amount: amount * 100,
+            currency: 'INR',
+            receipt: `rcpt_${uuidv4()}`,
+        };
+        const order = await razorpay.orders.create(options);
+        res.status(201).json({
+            success: true,
+            order,
+            message: 'Order Payment Created Successfully.',
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error, 500));
+    }
+});
 
 // create oreder
 interface CreateOrderRequest {
     courseId: string;
-    paymentInfo: object;
+    paymentInfo: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+        amount?: number;
+    };
 }
 export const createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -34,6 +89,14 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
         }
         // calculate payment and info
         const amount = course.price || course.estimatedPrice;
+
+        const expectedSign = await getExpactedSign(paymentInfo, res, next);
+        if (!expectedSign) {
+            return next(new ErrorHandler('Invalid Signature, Fraud Attempt!', 403));
+        }
+        if (expectedSign !== paymentInfo.razorpay_signature) {
+            return next(new ErrorHandler('Invalid Signature, Fraud Attempt!', 403));
+        }
         paymentInfo = {
             ...paymentInfo,
             amount,
@@ -71,6 +134,22 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
     }
 });
 
+// get my orders for user
+export const getMyOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const orders = await Order.find({ userId: req.user?._id }).populate('userId', 'name email').populate('courseId', 'name price');
+
+        if (!orders || orders.length === 0) {
+            return next(new ErrorHandler('No orders found', 404));
+        }
+        res.status(200).json({
+            success: true,
+            orders,
+        });
+    } catch (error) {
+        next(new ErrorHandler(error, 500));
+    }
+});
 
 // get all orders for admin
 export const getAllOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

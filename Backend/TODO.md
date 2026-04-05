@@ -2,6 +2,10 @@
     upload thumbnail can be posible
     video upload hold it 
 
+# cousre 
+    add course search keyword or filter course 
+    pagination in courses
+
 # Notificaiton 
     this app currently good for single admin 
     if more admin than add notifications for user

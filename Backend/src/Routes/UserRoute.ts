@@ -21,7 +21,7 @@ router.put('/me/update-password', isAuth, updatePassword);
 router.get('/admin/users', [isAuth, authRole('admin')], getallUsers);
 router
     .route('/admin/users/:id')
-    .put([validId, isAuth, authRole('admin')], updateRole)
-    .delete([validId, isAuth, authRole('admin')], deleteUser);
+    .put([validId, isAuth, authRole('admin', 'superAdmin')], updateRole)
+    .delete([validId, isAuth, authRole('admin', 'superAdmin')], deleteUser);
 
 export const UserRouter = router;

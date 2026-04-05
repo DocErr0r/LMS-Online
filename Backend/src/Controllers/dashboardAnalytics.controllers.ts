@@ -3,9 +3,9 @@ import { NextFunction, Request, Response } from 'express';
 import User from '../Models/UserModal';
 import Order from '../Models/Order.model';
 import { Course } from '../Models/Course.model';
-import { asyncHandler } from './AsyncHandler';
-import ErrorHandler from './ErrorHnadler';
 import { analyticsOfLastYear } from '../services/analytics.services';
+import { asyncHandler } from '../Utils/AsyncHandler';
+import ErrorHandler from '../Utils/ErrorHnadler';
 
 // Calculate percentage changes
 const calculatePercentageChange = (current: number, previous: number): number => {
