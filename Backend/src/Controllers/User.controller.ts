@@ -95,7 +95,7 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
 
         const user = JSON.parse((await redis.get(decoded.id as string)) || '{}') as IUser;
         if (!user) {
-            return next(new ErrorHandler('User not found', 404));
+            return next(new ErrorHandler('User not found,please login to access', 404));
         }
 
         // New access and refresh token genreate other due to redis data

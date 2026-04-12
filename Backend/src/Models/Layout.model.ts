@@ -7,7 +7,7 @@ interface faq extends Document {
 
 interface banner extends Document {
     image: {
-        public_id: string;
+        public_id?: string;
         url: string;
     };
     title: string;
@@ -34,15 +34,15 @@ const categorySchema = new mongoose.Schema<category>({
 });
 
 const LayoutSchema = new mongoose.Schema<Layout>({
-    type: { type: String },
+    type: { type: String, enum: ['FAQ', 'CATEGORY', 'BANNER'], uppercase: true, required: true },
     faq: [faqSchema],
     category: [categorySchema],
     banner: {
-        title: { type: String },
-        subtitle: { type: String },
+        title: { type: String, required: true },
+        subtitle: { type: String, required: true },
         image: {
             public_id: { type: String },
-            url: { type: String },
+            url: { type: String, required: true },
         },
     },
 });

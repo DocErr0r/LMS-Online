@@ -19,12 +19,6 @@ interface ProcessedFile {
     originalname: string;
     mimetype: string;
 }
-declare module 'express-serve-static-core' {
-    interface Request {
-        processedFiles?: ProcessedFile[];
-        processedFile?: ProcessedFile;
-    }
-}
 
 // Middleware to process image with Sharp
 export const processImages = async (req: Request, res: Response, next: NextFunction) => {

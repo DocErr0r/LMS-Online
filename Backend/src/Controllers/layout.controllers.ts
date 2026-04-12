@@ -3,30 +3,33 @@ import { asyncHandler } from '../Utils/AsyncHandler';
 import LayoutModel from '../Models/Layout.model';
 import ErrorHandler from '../Utils/ErrorHnadler';
 
+interface typeBodyRequest {
+    type: string;
+}
 // creat layout according to type
 export const createLayout = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type } = req.body;
+        const { type } = req.body as typeBodyRequest;
         const exist = await LayoutModel.findOne({ type });
         if (exist) {
-            return next(new ErrorHandler(`${type} already exist`, 400));
+            return next(new ErrorHandler(`${exist.type} already exist`, 400));
         }
-        if (type === 'Banner') {
+        if (type.toLowerCase() === 'banner') {
             const { image, title, subtitle } = req.body;
             // cloud upload
             const banner = {
                 image: {
-                    public_id: image.public_id,
+                    public_id: image?.public_id,
                     url: image.url,
                 },
                 title,
                 subtitle,
             };
             await LayoutModel.create({ type, banner });
-        } else if (type === 'FAQ') {
+        } else if (type.toUpperCase() === 'FAQ') {
             const { faq } = req.body;
             await LayoutModel.create({ type, faq });
-        } else if (type === 'Category') {
+        } else if (type.toLowerCase() === 'category') {
             const { category } = req.body;
             await LayoutModel.create({ type, category });
         } else {
@@ -37,48 +40,68 @@ export const createLayout = asyncHandler(async (req: Request, res: Response, nex
             message: 'Layout created successfully',
         });
     } catch (err: any) {
+        console.log(err);
         return next(new ErrorHandler(err, 500));
     }
 });
 
 // edit layout
 export const editLayout = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { type } = req.body;
-        if (type === 'Banner') {
-            const { image, title, subtitle } = req.body;
-            const bannerData: any = await LayoutModel.findOne({ type });
-            if (bannerData) {
-                // destory image
-            }
-            // cloud upload new image
-            const banner = {
-                image: {
-                    public_id: image.public_id,
-                    url: image.url,
-                },
-                title,
-                subtitle,
-            };
-            await LayoutModel.findByIdAndUpdate(bannerData._id, { banner });
-        } else if (type === 'FAQ') {
-            const faqData: any = await LayoutModel.findOne({ type });
-            const { faq } = req.body;
-            await LayoutModel.findByIdAndUpdate(faqData?._id, { faq });
-        } else if (type === 'Category') {
-            const categoryData: any = await LayoutModel.findOne({ type });
-            const { category } = req.body;
-            await LayoutModel.findByIdAndUpdate(categoryData?._id, { category });
-        } else {
-            return next(new ErrorHandler('Please provide valid type of layout', 400));
-        }
-        res.status(201).json({
-            success: true,
-            message: `Layout ${type} updated successfully`,
-        });
-    } catch (err: any) {
-        return next(new ErrorHandler(err, 500));
+    const { type } = req.body as typeBodyRequest;
+
+    const existData: any = await LayoutModel.findOne({ type });
+    if (!existData) {
+        return next(new ErrorHandler(`${type} not found`, 404));
     }
+
+    let updateData: any = {};
+
+    // BANNER UPDATE
+    if (type.toLowerCase() === 'banner') {
+        const { image, title, subtitle } = req.body;
+        if (image) {
+            updateData['banner.image'] = {
+                public_id: image?.public_id,
+                url: image.url,
+            };
+        }
+        if (title) {
+            updateData['banner.title'] = title;
+        }
+        if (subtitle) {
+            updateData['banner.subtitle'] = subtitle;
+        }
+    }
+    // FAQ UPDATE
+    else if (type.toLowerCase() === 'faq') {
+        const { faq } = req.body;
+        if (!faq || !faq.length) {
+            return next(new ErrorHandler('FAQ data is required', 400));
+        }
+        updateData['faq'] = faq;
+    }
+
+    // CATEGORY UPDATE
+    else if (type.toLowerCase() === 'category') {
+        const { category } = req.body;
+        if (!category || !category.length) {
+            return next(new ErrorHandler('Category data is required', 400));
+        }
+        updateData['category'] = category;
+    }
+    // INVALID TYPE
+    else {
+        return next(new ErrorHandler('Please provide valid type of layout', 400));
+    }
+    // If nothing to update
+    if (Object.keys(updateData).length === 0) {
+        return next(new ErrorHandler('No valid fields provided to update', 400));
+    }
+    const updatedLayout = await LayoutModel.findByIdAndUpdate(existData._id, { $set: updateData }, { new: true });
+    res.status(200).json({
+        success: true,
+        message: `Layout ${type} updated successfully`,
+    });
 });
 
 // get layout by type
