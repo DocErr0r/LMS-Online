@@ -116,7 +116,7 @@ export const updateAccessToken = asyncHandler(async (req: Request, res: Response
 
         res.cookie('token', newAccessToken, AccessCookieOptions);
         res.cookie('refreshToken', newRefreshToken, RefreshCookieOptions);
-        redis.set(user._id as string, JSON.stringify(user), 'EX', redisExpire);
+        redis.set(user._id.toString(), JSON.stringify(user), 'EX', redisExpire);
 
         return res.status(200).json({
             success: true,
@@ -156,7 +156,7 @@ export const socialLogin = asyncHandler(async (req: Request, res: Response, next
 // get user profile
 export const getUserProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user._id as string;
+        const userId = req.user._id.toString() as string;
         getUserDetails(userId, res);
     } catch (error: any) {
         next(new ErrorHandler(error, 400));
@@ -171,7 +171,7 @@ interface updateProfileBody {
 }
 export const updateProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user._id as string;
+        const userId = req.user._id.toString() as string;
         const { name, email } = req.body as updateProfileBody;
 
         const user = (await User.findById(userId)) as IUser;
@@ -190,7 +190,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response, ne
 
         await user.save({ validateBeforeSave: true });
         const { createdAt, updatedAt, __v, ...userWithoutExtra } = user.toObject();
-        redis.set(user._id as string, JSON.stringify(userWithoutExtra), 'EX', redisExpire);
+        redis.set(user._id.toString() as string, JSON.stringify(userWithoutExtra), 'EX', redisExpire);
 
         res.status(200).json({
             success: true,
@@ -219,7 +219,7 @@ const uploadToCloudinary = (buffer: Buffer, folder: string): Promise<any> => {
 export const updateAvatar = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     let uploadedPublicId: string | null = null;
     try {
-        const userId = req.user._id as string;
+        const userId = req.user._id.toString() as string;
         // const { avatar } = req.body as updateAvatarBody;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const avatar = req.processedFile?.buffer as Buffer;
@@ -255,7 +255,7 @@ export const updateAvatar = asyncHandler(async (req: Request, res: Response, nex
         await user.save({ validateBeforeSave: true });
 
         const { createdAt, updatedAt, __v, ...userWithoutPassword } = user.toObject();
-        redis.set(user._id as string, JSON.stringify(userWithoutPassword), 'EX', redisExpire);
+        redis.set(user._id.toString() as string, JSON.stringify(userWithoutPassword), 'EX', redisExpire);
 
         res.status(200).json({
             success: true,
@@ -279,7 +279,7 @@ interface updatePasswordBody {
 
 export const updatePassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user._id as string;
+        const userId = req.user._id.toString() as string;
         const { oldPassword, newPassword, confirmPassword } = req.body as updatePasswordBody;
         if (!oldPassword || !newPassword || !confirmPassword) {
             return next(new ErrorHandler('Please provide all fields', 400));
@@ -333,7 +333,7 @@ export const updateRole = asyncHandler(async (req: Request, res: Response, next:
             return next(new ErrorHandler('Role can only be user or admin', 400));
         }
         // user cant change his own role
-        if (req.user._id === userId) {
+        if (req.user._id.toString() === userId.toString()) {
             return next(new ErrorHandler('You cannot change your own role', 403));
         }
 
@@ -355,7 +355,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response, next:
             return next(new ErrorHandler('User not found', 404));
         }
         // not self delete admin user
-        if (req.user._id === userId && req.user.role === 'admin') {
+        if (req.user._id.toString() === userId.toString() && req.user.role === 'admin') {
             return next(new ErrorHandler('You cannot delete your own account', 403));
         }
         // not delete admin user by other admin

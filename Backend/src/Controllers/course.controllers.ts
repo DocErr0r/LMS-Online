@@ -278,7 +278,7 @@ export const addReply = asyncHandler(async (req: Request, res: Response, next: N
             return next(new ErrorHandler('Course not found', 404));
         }
         if (['admin', 'superAdmin'].includes(req.user.role)) {
-            if (course?.user.toString() !== req?.user._id) {
+            if (course?.user.toString() !== req?.user._id.toString()) {
                 return next(new ErrorHandler('For Admin you do not have access this course', 404));
             }
         } else {
@@ -310,7 +310,7 @@ export const addReply = asyncHandler(async (req: Request, res: Response, next: N
         await course.save();
 
         // add logic for notificaiton
-        if (req.user._id !== course.user.toString()) {
+        if (req.user._id.toString() !== course.user.toString()) {
             const notification = await Notification.create({
                 user: req.user,
                 title: 'New Reply',

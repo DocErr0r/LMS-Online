@@ -146,7 +146,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response, next
         );
         await session.commitTransaction();
         session.endSession();
-        updateUserDetails(user._id as string, user);
+        updateUserDetails(user._id.toString(), user);
 
         res.status(201).json({
             success: true,
