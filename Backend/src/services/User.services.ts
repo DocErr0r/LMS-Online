@@ -49,7 +49,7 @@ export const updateRoleService = async (adminRole: string, userId: string, role:
     }
     const updatedUser: any = await User.findByIdAndUpdate(userId, { role }, { new: true, runValidators: true });
     const { createdAt, updatedAt, __v, ...userWithoutExtra } = updatedUser.toObject();
-    redis.set(user._id as string, JSON.stringify(userWithoutExtra), 'EX', redisExpire);
+    redis.set(user._id.toString() as string, JSON.stringify(userWithoutExtra), 'EX', redisExpire);
     res.status(200).json({
         success: true,
         message: 'User role updated successfully',
