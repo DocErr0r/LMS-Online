@@ -1,82 +1,206 @@
-import React, { FC, useState } from 'react';
+'use client';
+
+import React, { FC, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { ThemeToggle } from './ThemaButton';
+import { MdOutlineNotifications } from 'react-icons/md';
+import { FaRegUser } from 'react-icons/fa';
+import { NavItems } from './NavItems';
+import Badge from '@mui/material/Badge';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { IoMdLogOut, IoMdLogIn } from 'react-icons/io';
+import { FiSettings } from 'react-icons/fi';
+import { Button } from '@mui/material';
+import { LuGraduationCap } from 'react-icons/lu';
 
 interface HeaderProps {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-    activeItem: number;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  activeItem: number;
 }
 
 const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
-    const { theme, setTheme } = useTheme();
-    const [active, setActive] = useState(false);
-    const [opensidebar, setOpensidebar] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [active, setActive] = useState(false);
+  // const [opensidebar, setOpensidebar] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const userMenuOpen = Boolean(userMenuAnchor);
 
-    if (typeof window !== 'undefined') {
-        addEventListener('scroll', () => {
-            if (window.scrollY > 85) {
-                setActive(true);
-            } else {
-                setActive(false);
-            }
-        });
-    }
-    const navItems = [
-        { href: '/', label: 'Home', id: 0 },
-        { href: '/courses', label: 'Courses', id: 1 },
-        { href: '/dashboard', label: 'Dashboard', id: 2 },
-        { href: '/about', label: 'About', id: 3 },
-    ];
+  const notificationCount = useMemo(() => 1, []);
 
-    return (
-        <header className="w-full relative">
-            <div className={`${active ? 'dark:opacity-90 bg-gradient-to-b from-[#f8f7ff] via-[#f3f1ff] to-white text-purpleLight-text dark:bg-gradient-to-b dark:from-[#0b0615] dark:via-[#120a23] dark:to-[#1b1233] fixed top-0 left-0 w-full h-[80px] z-[80] border-b dark:border-gray-500 shadow-xl transition duration-300' : 'w-full border-b h-[80px] z-[80] dark:border-gray-500 dark:shadow '}`}>
-                <div className="w-[95%] h-full py-2 m-auto 880px:w-[92%]">
-                    <div className="w-full h-[80px] flex items-center justify-between">
-                        <ThemeToggle />
-                        {/* Logo */}
-                        <div className="flex items-center gap-2">
-                            <Link href="/">
-                                <span className="text-2xl font-bold text-blue-600">LMS Online</span>
-                            </Link>
-                        </div>
-                        {/* Navigation Links */}
-                        <nav className="hidden md:flex gap-8">
-                            {navItems.map((item) => (
-                                <Link key={item.id} href={item.href} className={`text-base font-medium transition-colors duration-200 ${activeItem === item.id ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200 hover:text-blue-600'}`}>
-                                    {item.label}
-                                </Link>
-                            ))}
-                        </nav>
-                        {/* Right Side Icons */}
-                        <div className="flex items-center gap-5">
-                            {/* Message Icon */}
-                            <button className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-600 dark:text-gray-200">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-.659 1.591l-7.591 7.591a2.25 2.25 0 01-3.182 0L2.909 8.584A2.25 2.25 0 012.25 6.993V6.75" />
-                                </svg>
-                            </button>
-                            {/* Notification Icon */}
-                            <button className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-600 dark:text-gray-200">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a2.25 2.25 0 01-5.714 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-4.5v5.25" />
-                                </svg>
-                                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                            </button>
-                            {/* Profile Icon */}
-                            <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-gray-600 dark:text-gray-200">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  if (typeof window !== 'undefined') {
+    addEventListener('scroll', () => {
+      if (window.scrollY > 85) {
+        setActive(true);
+      } else {
+        setActive(false);
+      }
+    });
+  }
+  const isLogin = false;
+
+  return (
+    <header className="w-full relative">
+      <div className={`${active ? 'backdrop-blur-lg bg-gradient-to-b from-[#d4d3d5]/60 via-[#e2dff2]/60 to-[#e6cdf7]/60 dark:bg-gradient-to-b dark:from-[#0b0615]/60 dark:via-[#120a23]/60 dark:to-[#1b1233]/60 fixed top-0 left-0 w-full h-[80px] z-[80] border-b dark:border-gray-500 shadow-xl duration-300' : 'w-full border-b h-[80px] z-[80] dark:border-gray-500 dark:shadow '}`}>
+        <div className="w-[95%] h-full py-2 m-auto 880px:w-[92%]">
+          <div className="w-full h-full flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex flex-1 items-center gap-2">
+              <LuGraduationCap className="bg-primary text-gray-100 rounded-lg p-1 h-8 w-8 sm:w-10 sm:h-10" />
+              <Link href="/">
+                <span className="md:text-3xl sm:text-2xl text-xl font-bold text-primary">LearnMax</span>
+              </Link>
             </div>
-        </header>
-    );
+            {/* Navigation Links */}
+            <div className="flex max-800:order-2">
+              <NavItems activeItem={activeItem} open={open} isLogin={isLogin} setOpen={setOpen} />
+            </div>
+            {/* Right Side Icons */}
+            <div className="flex flex-1 justify-end text-text items-center gap-0.5 md:gap-1">
+              <ThemeToggle />
+              <IconButton
+                onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                // sx={{
+                //   color: 'inherit',
+                //   '&:hover': { backgroundColor: 'rgba(0,233,0,0.06)' },
+                // }}
+                aria-controls={userMenuOpen ? 'user-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={userMenuOpen ? 'true' : undefined}
+                className="relative sm:p-2 p-1 !text-inherit  hover:!bg-primary transition"
+              >
+                <Badge variant="dot" color="error" invisible={notificationCount === 0 || !isLogin}>
+                  <FaRegUser className="sm:w-6 sm:h-6 h-4 w-4" />
+                </Badge>
+              </IconButton>
+
+              <Menu
+                id="user-menu"
+                anchorEl={userMenuAnchor}
+                open={userMenuOpen}
+                onClose={() => setUserMenuAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{
+                  paper: {
+                    className: '!bg-bg border border-ring !text-text shadow-xl',
+                  },
+                }}
+              >
+                {isLogin ? (
+                  <>
+                    {/* <MenuItem
+                  onClick={() => {
+                    setUserMenuAnchor(null);
+                    // toggleTheme(); 
+                    }}
+                    >
+                  <ListItemIcon>{theme === 'light' ? '🌙' : '☀️'}</ListItemIcon>
+                  Theme
+                </MenuItem> */}
+                    <MenuItem
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                      className="hover:!bg-primary-hover"
+                    >
+                      <ListItemIcon>
+                        <Badge color="error" badgeContent={notificationCount} invisible={notificationCount === 0} max={9}>
+                          <MdOutlineNotifications className="w-5 h-5 text-text" />
+                        </Badge>
+                      </ListItemIcon>
+                      Notifications
+                    </MenuItem>
+
+                    {/* <Divider className="!bg-ring" /> */}
+
+                    <MenuItem
+                      className="hover:!bg-primary-hover !border-y !border-ring"
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <FaRegUser className="w-4 h-4 text-text" />
+                      </ListItemIcon>
+                      Profile
+                    </MenuItem>
+
+                    <MenuItem
+                      className="hover:!bg-primary-hover !border-y !border-ring"
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <FiSettings className="w-4 h-4 text-text" />
+                      </ListItemIcon>
+                      Setting
+                    </MenuItem>
+
+                    <MenuItem
+                      className="hover:!bg-primary-hover "
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <IoMdLogOut className="w-4 h-4 text-text" />
+                      </ListItemIcon>
+                      Log Out
+                    </MenuItem>
+                  </>
+                ) : (
+                  // <div className="flex gap-1 !px-1">
+                  //   <Button variant="outlined" className="hover:!bg-primary-hover !border-ring !text-text">
+                  //     {/* <Link href="/auth"> */}
+                  //     Sign In
+                  //     {/* </Link> */}
+                  //   </Button>
+                  //   <Button variant="contained" className="!bg-primary !text-gray-100 hover:!bg-primary-hover !px-2">
+                  //     {/* <Link href="/auth?mode=register"> */}
+                  //     Get Started
+                  //     {/* </Link> */}
+                  //   </Button>
+                  // </div>
+
+                  <>
+                    <MenuItem
+                      className="hover:!bg-primary-hover !border-b !border-ring "
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <IoMdLogIn className="w-4 h-4 text-text" />
+                      </ListItemIcon>
+                      Sign In
+                    </MenuItem>
+                    <MenuItem
+                      className="bg-primary hover:!bg-primary-hover "
+                      onClick={() => {
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <IoMdLogIn className="w-4 h-4 text-text" />
+                      </ListItemIcon>
+                      Sign Up
+                    </MenuItem>
+                  </>
+                )}
+              </Menu>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 };
 
 export default Header;

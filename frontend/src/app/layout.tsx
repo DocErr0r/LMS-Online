@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${poppins.variable} ${josefin.variable} antialiased bg-gradient-to-b from-[#f8f7ff] via-[#f3f1ff] to-white text-purpleLight-text dark:bg-gradient-to-b dark:from-[#0b0615] dark:via-[#120a23] dark:to-[#1b1233] dark:text-purple-text duration-300`}>
+      <body className={`${poppins.variable} ${josefin.variable} antialiased`}>
         <ThemeProviders attribute={'class'} defaultTheme="system" enableSystem>
           {children}
         </ThemeProviders>

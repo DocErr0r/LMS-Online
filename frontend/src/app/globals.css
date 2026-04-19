@@ -28,37 +28,76 @@ body {
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    /* Dark Purple Theme */
-    --color-purple-bg: #0b0615;
+  /* Dark Purple Theme */
+  /* --color-purple-bg: #0b0615;
     --color-purple-surface: #171129;
     --color-purple-border: #2a1f45;
     --color-purple-text: #e9e3ff;
     --color-purple-muted: #bfb6e8;
     --color-purple-primary: #8b5cf6;
-    --color-purple-accent: #f472b6;
+    --color-purple-accent: #f472b6; */
 
-    /* Light Purple Theme */
-    --color-purpleLight-bg: #f8f7ff;
+  /* Light Purple Theme */
+  /* --color-purpleLight-bg: #f8f7ff;
     --color-purpleLight-surface: #ffffff;
     --color-purpleLight-border: #e8e3ff;
     --color-purpleLight-text: #1b1333;
     --color-purpleLight-muted: #5b507d;
     --color-purpleLight-primary: #7c3aed;
-    --color-purpleLight-accent: #d946ef;
+    --color-purpleLight-accent: #d946ef; */
 
-    /* Custom Screens */
-    --breakpoint-400: 400px;
-    --breakpoint-800: 800px;
-    --breakpoint-1000: 1000px;
-    --breakpoint-1100: 1100px;
-    --breakpoint-1200: 1200px;
-    --breakpoint-1300: 1300px;
-    --breakpoint-1500: 1500px;
+  --color-bg: #0b0615;
+  --color-surface: #171129;
+  --color-surface-2: #1f1835;
+
+  --color-text: #e9e3ff;
+  --color-text-muted: #bfb6e8;
+
+  --color-border: #2a1f45;
+
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+
+  --color-accent: #f472b6;
+
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+
+  --color-ring: #a78bfa;
+
+  /* Custom Screens */
+  --breakpoint-400: 400px;
+  --breakpoint-800: 800px;
+  --breakpoint-1000: 1000px;
+  --breakpoint-1100: 1100px;
+  --breakpoint-1200: 1200px;
+  --breakpoint-1300: 1300px;
+  --breakpoint-1500: 1500px;
+}
+.light {
+  --color-bg: #e5e1fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1edff;
+
+  --color-text: #1b1333;
+  --color-text-muted: #5b507d;
+
+  --color-border: #e8e3ff;
+
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+
+  --color-accent: #d946ef;
+
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+
+  --color-ring: #8b5cf6;
 }
 
 @utility gradient-radial {
-    background-image: radial-gradient(var(--tw-gradient-stops))
+  background-image: radial-gradient(var(--tw-gradient-stops));
 }
 @utility gradient-conic {
-    background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
+  background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
 }
