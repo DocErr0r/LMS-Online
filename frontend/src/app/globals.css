@@ -28,6 +28,10 @@ body {
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+
+  --font-poppins:'--font-poppins';
+  --font-josefin:'--font-josefin';
+
   /* Dark Purple Theme */
   /* --color-purple-bg: #0b0615;
     --color-purple-surface: #171129;
@@ -96,8 +100,27 @@ body {
 }
 
 @utility gradient-radial {
-  background-image: radial-gradient(var(--tw-gradient-stops));
+  background-image: radial-gradient(--tw-gradient-stops);
 }
 @utility gradient-conic {
   background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  /* height: 8px; */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-text);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+  /* border: 2px solid var(--color-bg); */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary);
 }

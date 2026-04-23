@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Header from '../components/header/Header';
 import Sidebar from '../components/sidebar/sidebar';
+import Footer from '../components/Footer/Footer';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -12,9 +13,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Header open={open} setOpen={setOpen} activeItem={avtiveItem} />
         <div className="flex flex-1">
           {/* <Sidebar open={open} /> */}
-          <main className="flex-1 p-6 min-h-screen bg-theme-gradient">{children}</main>
+          <main className="flex-1 p-6 min-h-screen">{children}</main>
         </div>
-        <footer className="bg-gray-500">© 2026 My App</footer>
+        <Footer />
       </div>
     </div>
   );

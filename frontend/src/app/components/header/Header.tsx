@@ -15,8 +15,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { IoMdLogOut, IoMdLogIn } from 'react-icons/io';
 import { FiSettings } from 'react-icons/fi';
-import { Button } from '@mui/material';
 import { LuGraduationCap } from 'react-icons/lu';
+import AuthModal, { type AuthMode } from '../auth/AuthModal';
 
 interface HeaderProps {
   open: boolean;
@@ -30,6 +30,8 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
   // const [opensidebar, setOpensidebar] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const userMenuOpen = Boolean(userMenuAnchor);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('signin');
 
   const notificationCount = useMemo(() => 1, []);
 
@@ -45,7 +47,7 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
   const isLogin = false;
 
   return (
-    <header className="w-full relative">
+    <header className="w-full relative font-poppins ">
       <div className={`${active ? 'backdrop-blur-lg bg-gradient-to-b from-[#d4d3d5]/60 via-[#e2dff2]/60 to-[#e6cdf7]/60 dark:bg-gradient-to-b dark:from-[#0b0615]/60 dark:via-[#120a23]/60 dark:to-[#1b1233]/60 fixed top-0 left-0 w-full h-[80px] z-[80] border-b dark:border-gray-500 shadow-xl duration-300' : 'w-full border-b h-[80px] z-[80] dark:border-gray-500 dark:shadow '}`}>
         <div className="w-[95%] h-full py-2 m-auto 880px:w-[92%]">
           <div className="w-full h-full flex items-center justify-between">
@@ -174,6 +176,8 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
                       className="hover:!bg-primary-hover !border-b !border-ring "
                       onClick={() => {
                         setUserMenuAnchor(null);
+                        setAuthMode('signin');
+                        setAuthOpen(true);
                       }}
                     >
                       <ListItemIcon>
@@ -185,6 +189,8 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
                       className="bg-primary hover:!bg-primary-hover "
                       onClick={() => {
                         setUserMenuAnchor(null);
+                        setAuthMode('signup');
+                        setAuthOpen(true);
                       }}
                     >
                       <ListItemIcon>
@@ -199,6 +205,8 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
           </div>
         </div>
       </div>
+
+      <AuthModal open={authOpen} mode={authMode} onClose={() => setAuthOpen(false)} onModeChange={(m: AuthMode) => setAuthMode(m)} />
     </header>
   );
 };
