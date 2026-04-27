@@ -19,14 +19,14 @@ export const AccessCookieOptions: IcookieOptions = {
     httpOnly: true,
     maxAge: ExpriesAccess * 60 * 1000,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite:process.env.NODE_ENV === 'production'?'none': 'lax',
 };
 export const RefreshCookieOptions: IcookieOptions = {
     expires: new Date(Date.now() + ExpriesRefresh * 24 * 60 * 60 * 1000),
     httpOnly: true,
     maxAge: ExpriesRefresh * 24 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite:process.env.NODE_ENV === 'production'?'none': 'lax',
 };
 
 export const setCookies = (res: Response, user: IUser): void => {

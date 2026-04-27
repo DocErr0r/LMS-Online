@@ -17,6 +17,7 @@ import { IoMdLogOut, IoMdLogIn } from 'react-icons/io';
 import { FiSettings } from 'react-icons/fi';
 import { LuGraduationCap } from 'react-icons/lu';
 import AuthModal, { type AuthMode } from '../auth/AuthModal';
+import { useAppSelector } from '@/redux toolkit/store/hooks';
 
 interface HeaderProps {
   open: boolean;
@@ -32,6 +33,7 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
   const userMenuOpen = Boolean(userMenuAnchor);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
+  const { user, ready } = useAppSelector((s) => s.auth);
 
   const notificationCount = useMemo(() => 1, []);
 
@@ -44,7 +46,8 @@ const Header: FC<HeaderProps> = ({ open, setOpen, activeItem }) => {
       }
     });
   }
-  const isLogin = false;
+   const isLogin = false;
+  // const isLogin = ready && Boolean(user);
 
   return (
     <header className="w-full relative font-poppins ">
