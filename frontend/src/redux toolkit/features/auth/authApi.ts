@@ -1,33 +1,35 @@
+import { AUTH_URL } from '@/redux toolkit/constants';
 import { BaseApi } from '../../api/apiSlice';
 import { setCredentials, logout, userRegistration } from './authSlice';
 
 export const authApi = BaseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // TODO: add typs for mutaion and query
-    register: builder.mutation({
+    register: builder.mutation<{ token: string; user: unknown; data: any }, { name: string; email: string; password: string }>({
       query: (body) => ({
-        url: 'register',
+        url: AUTH_URL + '/register',
         method: 'POST',
         body,
         credentials: 'include' as const,
       }),
+      invalidatesTags: ['User'],
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const data = await queryFulfilled;
-          console.log(data);
-          dispatch(userRegistration(data.data.token));
+          // console.log(data);
+          // dispatch(userRegistration(data?.data?.token));
           //   dispatch(setCredentials(data.data.token));
         } catch (error) {
           console.log(error);
         }
       },
     }),
-    login: builder.mutation<{ token: string; user: unknown }, { email: string; password: string }>({
+    login: builder.mutation<{ token: string; user: unknown; data: any }, { email: string; password: string }>({
       query: (body) => ({
-        url: '/auth/login',
+        url: AUTH_URL + '/login',
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['User'],
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
